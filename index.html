@@ -597,6 +597,63 @@ body{font-family:var(--font-body);background:var(--bg-deep);color:var(--text-pri
 
 <script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.165.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.165.0/examples/jsm/"}}</script>
 <script>
+// ========== Meisu3D Data Layer (aligned with MySQL schema) ==========
+// When backend is ready, replace these with real API calls
+
+// --- hospitals (hospitals table) ---
+const HOSPITALS=[
+  {id:1,name:'北京协和医院医疗美容科',city:'北京',address:'东城区帅府园1号'},
+  {id:2,name:'上海第九人民医院整复外科',city:'上海',address:'黄浦区制造局路639号'},
+  {id:3,name:'广州南方医院整形美容科',city:'广州',address:'白云区广州大道北1838号'},
+  {id:4,name:'杭州颜研医疗美容医院',city:'杭州',address:'西湖区文三路478号'},
+  {id:5,name:'成都华西医院美容整形科',city:'成都',address:'武侯区国学巷37号'},
+  {id:6,name:'深圳美莱医疗美容医院',city:'深圳',address:'福田区华强北路赛格广场'},
+  {id:7,name:'南京鼓楼医院整形烧伤科',city:'南京',address:'鼓楼区中山路321号'},
+  {id:8,name:'武汉同济医院整形美容科',city:'武汉',address:'硚口区解放大道1095号'},
+];
+
+// --- materials (materials table) ---
+const MATERIALS_DB=[
+  {id:1,name:'乔雅登雅致',brand:'Juvederm Ultra',type:'hyaluronic',price_per_ml:8800,maintain_days:180,suit_parts:['nose','chin','cheek','nasolabial']},
+  {id:2,name:'乔雅登极致',brand:'Juvederm Voluma',type:'hyaluronic',price_per_ml:12800,maintain_days:365,suit_parts:['chin','cheek','forehead']},
+  {id:3,name:'瑞蓝2号',brand:'Restylane',type:'hyaluronic',price_per_ml:5800,maintain_days:180,suit_parts:['nose','nasolabial','lips','forehead']},
+  {id:4,name:'艾莉薇传奇',brand:'Elravie',type:'hyaluronic',price_per_ml:6800,maintain_days:240,suit_parts:['nose','chin','cheek']},
+  {id:5,name:'濡白天使',brand:'Jouvence',type:'collagen',price_per_ml:9800,maintain_days:365,suit_parts:['cheek','forehead','temple']},
+  {id:6,name:'伊婉C',brand:'Yvoire',type:'hyaluronic',price_per_ml:3800,maintain_days:120,suit_parts:['nose','nasolabial','lips']},
+];
+
+// --- 3d_cases (3d_cases table) ---
+const CASES_3D=[
+  {id:1,doctor_id:1,hospital_id:1,part:'nose',style:'recommend',material_id:1,fill_ml:1.0,rec:'3-5个月'},
+  {id:2,doctor_id:1,part:'nose',style:'korean',material_id:4,fill_ml:0.6,rec:'2-3个月'},
+  {id:3,doctor_id:2,part:'cheek',style:'korean',material_id:3,fill_ml:0.8,rec:'3-5个月'},
+  {id:4,doctor_id:3,part:'chin',style:'western',material_id:2,fill_ml:1.2,rec:'5-7个月'},
+  {id:5,doctor_id:3,part:'forehead',style:'western',material_id:1,fill_ml:1.0,rec:'3-5个月'},
+  {id:6,doctor_id:4,part:'nasolabial',style:'korean',material_id:5,fill_ml:0.4,rec:'2-3个月'},
+  {id:7,doctor_id:5,part:'cheek',style:'recommend',material_id:2,fill_ml:1.0,rec:'5-7个月'},
+  {id:8,doctor_id:6,part:'lips',style:'korean',material_id:6,fill_ml:0.3,rec:'2-3个月'},
+  {id:9,doctor_id:7,part:'nose',style:'western',material_id:1,fill_ml:0.8,rec:'3-5个月'},
+  {id:10,doctor_id:8,part:'cheek',style:'korean',material_id:3,fill_ml:0.6,rec:'3-5个月'},
+];
+
+// --- Mock API (simulates backend API, swap with fetch() later) ---
+const API={
+  getDoctors:(part,style)=>{
+    let f=DOCS.filter(d=>d.parts.includes(part)&&d.styles.includes(style)).sort((a,b)=>b.cases-a.cases);
+    if(!f.length)f=[...DOCS].sort((a,b)=>b.cases-a.cases);
+    return f.map(d=>({...d,hospital:HOSPITALS.find(h=>h.id===d.hospital_id)?.name||''}));
+  },
+  getMaterials:()=>MATERIALS_DB,
+  getCases:(part,style)=>{
+    let f=CASES_3D.filter(c=>c.part===part&&c.style===style);
+    if(!f.length)f=CASES_3D.slice(0,4);
+    return f;
+  },
+  createOrder:(data)=>({code:0,data:{order_no:'MS'+Date.now().toString().slice(-10),pay_status:0,...data}}),
+};
+</script>
+
+<script>
 // Loading hide - independent of Three.js loading
 window.addEventListener('load', function() {
   setTimeout(function() {
@@ -632,14 +689,7 @@ const DOCS=[
   {id:8,name:'苏婉清',rank:'主治医师',exp:5,hospital:'武汉同济医院整形美容科',license:'420106199501034567',avatar:'linear-gradient(135deg,#f6d365,#fda085)',intro:'华中科技大学同济医学院硕士，年轻一代注射美容新锐。审美前卫，特别擅长唇部塑形与面部整体协调性设计。',styles:['korean','recommend'],parts:['nose','cheek','nasolabial','lips'],cases:198,rating:4.7,tags:['唇部美学','面部协调','年轻化设计']},
 ];
 ];
-const CASES=[
-  {id:1,did:1,part:'nose',style:'recommend',mat:'乔雅登雅致',dose:'1.0ml',rec:'3-5天'},
-  {id:2,did:1,part:'nose',style:'korean',mat:'艾莉薇',dose:'0.6ml',rec:'2-3天'},
-  {id:3,did:3,part:'cheek',style:'korean',mat:'瑞蓝2号',dose:'0.8ml',rec:'3-5天'},
-  {id:4,did:2,part:'chin',style:'western',mat:'乔雅登极致',dose:'1.2ml',rec:'5-7天'},
-  {id:5,did:4,part:'forehead',style:'western',mat:'乔雅登雅致',dose:'1.0ml',rec:'3-5天'},
-  {id:6,did:5,part:'nasolabial',style:'korean',mat:'姣兰',dose:'0.4ml',rec:'2-3天'},
-];
+// CASES moved to CASES_3D (data layer), use API.getCases()
 
 // ═══ CAMERA ═══
 let cameraStream = null;
@@ -1217,7 +1267,7 @@ function renderDocs(){function renderDocs(){
 window.bookDoc=id=>{S.doctor=DOCS.find(d=>d.id===id);S.date=null;S.time=null;goToPage('apptPage');renderAppt();};
 function renderAppt(){
   document.getElementById('apptDocName').textContent=S.doctor.name;
-  document.getElementById('apptDocTitle').textContent=`${S.doctor.rank} · ${S.doctor.exp}年经验`;
+  document.getElementById('apptDocTitle').textContent=S.doctor.rank+' · '+S.doctor.hospital+' · '+S.doctor.exp+'年经验';
   const dg=document.getElementById('dateGrid'),wd=['日','一','二','三','四','五','六'],now=new Date();
   dg.innerHTML='';for(let i=1;i<=8;i++){const d=new Date(now);d.setDate(d.getDate()+i);dg.innerHTML+=`<div class="date-slot" onclick="selDate(this,'${d.getMonth()+1}/${d.getDate()}')"><div class="day">${d.getDate()}</div><div class="wd">周${wd[d.getDay()]}</div></div>`;}
   const tg=document.getElementById('timeGrid'),ts=['09:00','09:30','10:00','10:30','14:00','14:30','15:00','15:30','16:00'];
@@ -1227,7 +1277,7 @@ function renderAppt(){
 window.selDate=(el,d)=>{document.querySelectorAll('.date-slot').forEach(s=>s.classList.remove('active'));el.classList.add('active');S.date=d;};
 window.selTime=(el,t)=>{if(el.classList.contains('disabled'))return;document.querySelectorAll('.time-slot').forEach(s=>s.classList.remove('active'));el.classList.add('active');S.time=t;};
 function updApptSum(){const s=document.getElementById('apptSummary');let t=0,r='';for(const[p,a]of Object.entries(S.fills)){if(a>0){const m=MATS[p],pr=Math.round(m.p*(a/1.0));t+=pr;r+=`<div class="summary-row"><span class="label">${NAMES[p]} · ${m.n}</span><span>¥${pr.toLocaleString()}</span></div>`;}}r+=`<div class="summary-row total"><span>预估总价</span><span class="val">¥${t.toLocaleString()}</span></div>`;s.innerHTML=r;}
-window.submitAppointment=()=>{if(!S.date||!S.time){showToast('请选择预约日期和时段');return;}const n=document.getElementById('apptName').value,p=document.getElementById('apptPhone').value;if(!n||!p){showToast('请填写姓名和手机号');return;}if(!/^1\d{10}$/.test(p)){showToast('请输入正确的手机号');return;}goToPage('successPage');let t=0,items='';for(const[part,a]of Object.entries(S.fills)){if(a>0){const m=MATS[part],pr=Math.round(m.p*(a/1.0));t+=pr;items+=`<div class="s-row"><span class="label">${NAMES[part]}</span><span>${a.toFixed(1)}ml · ${m.n}</span></div>`;}}document.getElementById('successDetail').innerHTML=`<div class="s-row"><span class="label">${'<div class="s-row"><span class="label">预约医生</span><span>'+S.doctor.name+' '+S.doctor.rank+'</span></div>'}
+window.submitAppointment=()=>{if(!S.date||!S.time){showToast('请选择预约日期和时段');return;}const n=document.getElementById('apptName').value,p=document.getElementById('apptPhone').value;if(!n||!p){showToast('请填写姓名和手机号');return;}if(!/^1\d{10}$/.test(p)){showToast('请输入正确的手机号');return;}goToPage('successPage');const orderResult=API.createOrder({user_id:1,doctor_id:S.doctor.id});const orderNo=orderResult.data.order_no;let t=0,items='';for(const[part,a]of Object.entries(S.fills)){if(a>0){const m=MATS[part],pr=Math.round(m.p*(a/1.0));t+=pr;items+=`<div class="s-row"><span class="label">${NAMES[part]}</span><span>${a.toFixed(1)}ml · ${m.n}</span></div>`;}}document.getElementById('successDetail').innerHTML='<div class="s-row" style="font-size:11px;color:var(--text-muted)">订单号: '+orderNo+'</div><div class="s-row"><span class="label">${'<div class="s-row"><span class="label">预约医生</span><span>'+S.doctor.name+' '+S.doctor.rank+'</span></div>'}
 <div class="s-row"><span class="label">预约日期</span><span>${S.date}</span></div><div class="s-row"><span class="label">预约时段</span><span>${S.time}</span></div>${items}<div class="s-row" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border-pearl);font-weight:700"><span>预估总价</span><span style="color:var(--champagne)">¥${t.toLocaleString()}</span></div>`;};
 
 // ═══ TOAST ═══
