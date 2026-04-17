@@ -596,6 +596,20 @@ body{font-family:var(--font-body);background:var(--bg-deep);color:var(--text-pri
 </div>
 
 <script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.165.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.165.0/examples/jsm/"}}</script>
+<script>
+// Loading hide - independent of Three.js loading
+window.addEventListener('load', function() {
+  setTimeout(function() {
+    var ls = document.getElementById('loadScreen');
+    if (ls) ls.classList.add('gone');
+  }, 2000);
+});
+// Fallback: force hide after 5s no matter what
+setTimeout(function() {
+  var ls = document.getElementById('loadScreen');
+  if (ls) ls.classList.add('gone');
+}, 5000);
+</script>
 
 <script type="module">
 import * as THREE from 'three';
@@ -607,11 +621,16 @@ const NAMES={nose:'鼻基底',chin:'下巴',cheek:'苹果肌',temple:'太阳穴'
 const PRESETS={recommend:{nose:1.0,chin:0.8,cheek:0.6,temple:0.4,nasolabial:0.3,forehead:0.5},korean:{nose:0.6,chin:0.5,cheek:0.8,temple:0.3,nasolabial:0.2,forehead:0.3},western:{nose:1.5,chin:1.2,cheek:0.4,temple:0.6,nasolabial:0.3,forehead:1.0}};
 const MATS={nose:{n:'乔雅登雅致',p:8800},chin:{n:'乔雅登极致',p:12800},cheek:{n:'瑞蓝2号',p:6800},temple:{n:'艾莉薇',p:5800},nasolabial:{n:'姣兰',p:4800},forehead:{n:'乔雅登雅致',p:8800}};
 const DOCS=[
-  {id:1,name:'王丽华',rank:'主任医师',exp:15,styles:['recommend','korean'],parts:['nose','chin','cheek'],cases:328,rating:4.9,tags:['玻尿酸','自体脂肪','鼻部精雕']},
-  {id:2,name:'李明轩',rank:'副主任医师',exp:12,styles:['recommend','western'],parts:['nose','forehead','chin'],cases:256,rating:4.8,tags:['欧美立体','骨骼重塑','眉弓']},
-  {id:3,name:'张婉清',rank:'主治医师',exp:8,styles:['korean','recommend'],parts:['cheek','nasolabial','temple'],cases:189,rating:4.9,tags:['韩式自然','苹果肌','少女感']},
-  {id:4,name:'陈思远',rank:'副主任医师',exp:10,styles:['western','recommend'],parts:['nose','chin','forehead'],cases:215,rating:4.7,tags:['混血风','高鼻梁','下颌线']},
-  {id:5,name:'林雅琴',rank:'主治医师',exp:6,styles:['korean'],parts:['cheek','nasolabial','temple'],cases:142,rating:4.8,tags:['清新自然','胶原蛋白','法令纹']},
+const DOCS=[
+  {id:1,name:'陈思远',rank:'主任医师',exp:18,hospital:'北京协和医院医疗美容科',license:'110108198503156789',avatar:'linear-gradient(135deg,#667eea,#764ba2)',intro:'面部年轻化与精细化注射专家，专注注射美容领域18年，累计完成超过8000例面部填充案例。擅长根据面部黄金比例定制个性化美学方案。',styles:['recommend','korean'],parts:['nose','chin','cheek','forehead'],cases:832,rating:4.9,tags:['面部年轻化','综合填充','轮廓塑形']},
+  {id:2,name:'林雅琪',rank:'副主任医师',exp:12,hospital:'上海第九人民医院整复外科',license:'310104198702234567',avatar:'linear-gradient(135deg,#f093fb,#f5576c)',intro:'韩国延世大学整形外科博士，回国后专注面部美学注射10余年。尤其擅长韩式自然风格填充，追求"看不出做了"的天然效果。',styles:['korean','recommend'],parts:['cheek','nasolabial','temple','nose'],cases:645,rating:4.9,tags:['韩式自然','苹果肌','法令纹']},
+  {id:3,name:'张浩然',rank:'副主任医师',exp:14,hospital:'广州南方医院整形美容科',license:'440106198109081234',avatar:'linear-gradient(135deg,#4facfe,#00f2fe)',intro:'中华医学会医学美学与美容学分会委员，发表SCI论文12篇。以精准解剖学为基础，擅长立体轮廓打造和面部脂肪填充。',styles:['western','recommend'],parts:['nose','forehead','chin','cheek'],cases:756,rating:4.8,tags:['立体轮廓','鼻部塑形','综合打造']},
+  {id:4,name:'王诗涵',rank:'主治医师',exp:8,hospital:'杭州颜研医疗美容医院',license:'330106199203184567',avatar:'linear-gradient(135deg,#43e97b,#38f9d7)',intro:'浙大医学院硕士，师从多位国内顶尖注射专家。擅长面部精细化注射与泪沟、法令纹等细节部位填充，风格温柔细腻。',styles:['korean','recommend'],parts:['cheek','nasolabial','temple','forehead'],cases:423,rating:4.8,tags:['精细化注射','泪沟','法令纹']},
+  {id:5,name:'李明轩',rank:'主任医师',exp:20,hospital:'成都华西医院美容整形科',license:'510104198006123456',avatar:'linear-gradient(135deg,#fa709a,#fee140)',intro:'从事美容整形外科20年，中华医学会整形外科学分会委员。在面部轮廓三维重建与精准注射领域拥有丰富的临床经验。',styles:['recommend','western'],parts:['nose','chin','forehead','cheek'],cases:1056,rating:4.9,tags:['面部重建','精准注射','综合方案']},
+  {id:6,name:'赵雨桐',rank:'主治医师',exp:6,hospital:'深圳美莱医疗美容医院',license:'440305199405278901',avatar:'linear-gradient(135deg,#a18cd1,#fbc2eb)',intro:'新一代注射美学医生，擅长将前沿AI面部分析技术与传统美学相结合。注重沟通，为每位求美者量身定制方案。',styles:['korean'],parts:['cheek','nasolabial','temple','lips'],cases:289,rating:4.7,tags:['AI面部分析','定制方案','唇部填充']},
+  {id:7,name:'周启航',rank:'副主任医师',exp:16,hospital:'南京鼓楼医院整形烧伤科',license:'320106198408156789',avatar:'linear-gradient(135deg,#fccb90,#d57eeb)',intro:'南京大学医学院博士，专注面部美学与注射美容16年。擅长欧美立体风格与亚洲面孔的融合设计，打造兼具东方韵味的立体五官。',styles:['western','recommend'],parts:['nose','chin','forehead'],cases:678,rating:4.8,tags:['欧美立体','五官精雕','高难度修复']},
+  {id:8,name:'苏婉清',rank:'主治医师',exp:5,hospital:'武汉同济医院整形美容科',license:'420106199501034567',avatar:'linear-gradient(135deg,#f6d365,#fda085)',intro:'华中科技大学同济医学院硕士，年轻一代注射美容新锐。审美前卫，特别擅长唇部塑形与面部整体协调性设计。',styles:['korean','recommend'],parts:['nose','cheek','nasolabial','lips'],cases:198,rating:4.7,tags:['唇部美学','面部协调','年轻化设计']},
+];
 ];
 const CASES=[
   {id:1,did:1,part:'nose',style:'recommend',mat:'乔雅登雅致',dose:'1.0ml',rec:'3-5天'},
@@ -1186,11 +1205,12 @@ document.querySelectorAll('.case-filter .btn').forEach(b=>{b.addEventListener('c
 
 // ═══ DOCTORS ═══
 window.goToDoctorPage=()=>{goToPage('doctorPage');renderDocs();};
-function renderDocs(){
+function renderDocs(){function renderDocs(){
   const list=document.getElementById('docList');
   const filtered=DOCS.filter(d=>d.parts.includes(S.part)&&d.styles.includes(S.style)).sort((a,b)=>b.cases-a.cases);
   const docs=filtered.length?filtered:DOCS.sort((a,b)=>b.cases-a.cases);
-  list.innerHTML=docs.map(d=>`<div class="doc-card glass" onclick="bookDoc(${d.id})"><div class="doc-main"><div class="doc-avatar"><i class="fas fa-user-md"></i></div><div class="doc-info"><div class="doc-name-row"><span class="doc-name">${d.name}</span><span class="doc-rank">${d.rank}</span></div><div class="doc-exp">${d.exp}年经验</div><div class="doc-tags">${d.tags.map(t=>`<span class="doc-tag">${t}</span>`).join('')}</div></div></div><div class="doc-stats"><div class="doc-stat"><span class="doc-stat-val">${d.cases}</span><span class="doc-stat-label">3D案例</span></div><div class="doc-stat"><span class="doc-stat-val">⭐ ${d.rating}</span><span class="doc-stat-label">评分</span></div></div></div>`).join('');
+  list.innerHTML=`<div style="background:rgba(255,180,0,0.1);border:1px solid rgba(255,180,0,0.3);border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:12px;color:#ffb400;display:flex;align-items:center;gap:6px"><i class="fas fa-exclamation-triangle"></i>以下医生信息为测试数据，仅供演示，非真实医生</div>`+docs.map(d=>`<div class="doc-card glass" onclick="bookDoc(${d.id})"><div class="doc-main"><div class="doc-avatar" style="background:${d.avatar};font-size:18px;font-weight:700;color:#fff;display:flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:50%;flex-shrink:0">${d.name.substring(d.name.length-1)}</div><div class="doc-info"><div class="doc-name-row"><span class="doc-name">${d.name}</span><span class="doc-rank">${d.rank}</span></div><div class="doc-exp">${d.hospital} · ${d.exp}年经验</div><div class="doc-tags">${d.tags.map(t=>`<span class="doc-tag">${t}</span>`).join('')}</div></div></div><div class="doc-stats"><div class="doc-stat"><span class="doc-stat-val">${d.cases}</span><span class="doc-stat-label">3D案例</span></div><div class="doc-stat"><span class="doc-stat-val">★ ${d.rating}</span><span class="doc-stat-label">评分</span></div></div></div>`).join('');
+}
 }
 
 // ═══ APPOINTMENT ═══
@@ -1207,7 +1227,8 @@ function renderAppt(){
 window.selDate=(el,d)=>{document.querySelectorAll('.date-slot').forEach(s=>s.classList.remove('active'));el.classList.add('active');S.date=d;};
 window.selTime=(el,t)=>{if(el.classList.contains('disabled'))return;document.querySelectorAll('.time-slot').forEach(s=>s.classList.remove('active'));el.classList.add('active');S.time=t;};
 function updApptSum(){const s=document.getElementById('apptSummary');let t=0,r='';for(const[p,a]of Object.entries(S.fills)){if(a>0){const m=MATS[p],pr=Math.round(m.p*(a/1.0));t+=pr;r+=`<div class="summary-row"><span class="label">${NAMES[p]} · ${m.n}</span><span>¥${pr.toLocaleString()}</span></div>`;}}r+=`<div class="summary-row total"><span>预估总价</span><span class="val">¥${t.toLocaleString()}</span></div>`;s.innerHTML=r;}
-window.submitAppointment=()=>{if(!S.date||!S.time){showToast('请选择预约日期和时段');return;}const n=document.getElementById('apptName').value,p=document.getElementById('apptPhone').value;if(!n||!p){showToast('请填写姓名和手机号');return;}if(!/^1\d{10}$/.test(p)){showToast('请输入正确的手机号');return;}goToPage('successPage');let t=0,items='';for(const[part,a]of Object.entries(S.fills)){if(a>0){const m=MATS[part],pr=Math.round(m.p*(a/1.0));t+=pr;items+=`<div class="s-row"><span class="label">${NAMES[part]}</span><span>${a.toFixed(1)}ml · ${m.n}</span></div>`;}}document.getElementById('successDetail').innerHTML=`<div class="s-row"><span class="label">预约医生</span><span>${S.doctor.name}</span></div><div class="s-row"><span class="label">预约日期</span><span>${S.date}</span></div><div class="s-row"><span class="label">预约时段</span><span>${S.time}</span></div>${items}<div class="s-row" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border-pearl);font-weight:700"><span>预估总价</span><span style="color:var(--champagne)">¥${t.toLocaleString()}</span></div>`;};
+window.submitAppointment=()=>{if(!S.date||!S.time){showToast('请选择预约日期和时段');return;}const n=document.getElementById('apptName').value,p=document.getElementById('apptPhone').value;if(!n||!p){showToast('请填写姓名和手机号');return;}if(!/^1\d{10}$/.test(p)){showToast('请输入正确的手机号');return;}goToPage('successPage');let t=0,items='';for(const[part,a]of Object.entries(S.fills)){if(a>0){const m=MATS[part],pr=Math.round(m.p*(a/1.0));t+=pr;items+=`<div class="s-row"><span class="label">${NAMES[part]}</span><span>${a.toFixed(1)}ml · ${m.n}</span></div>`;}}document.getElementById('successDetail').innerHTML=`<div class="s-row"><span class="label">${'<div class="s-row"><span class="label">预约医生</span><span>'+S.doctor.name+' '+S.doctor.rank+'</span></div>'}
+<div class="s-row"><span class="label">预约日期</span><span>${S.date}</span></div><div class="s-row"><span class="label">预约时段</span><span>${S.time}</span></div>${items}<div class="s-row" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border-pearl);font-weight:700"><span>预估总价</span><span style="color:var(--champagne)">¥${t.toLocaleString()}</span></div>`;};
 
 // ═══ TOAST ═══
 window.showToast=msg=>{const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);};
@@ -1323,3 +1344,4 @@ renderCases('nose');updateScheme();renderProducts();
 </script>
 </body>
 </html>
+
