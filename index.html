@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>美塑3D - 医美3D填充模拟与决策平台</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400&family=DM+Sans:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+<style>
+:root {
+  --bg-deep:#1A0E14;--bg-primary:#1F1118;--bg-elevated:#2A1A22;
+  --bg-glass:rgba(42,26,34,0.65);--bg-glass-light:rgba(60,40,50,0.45);--bg-glass-hover:rgba(70,46,58,0.55);
+  --rose:#C9878F;--rose-light:#DBA0A8;--rose-glow:rgba(201,135,143,0.25);
+  --champagne:#D4B896;--champagne-light:#E6CBA8;--pearl:#F0E6E8;--pearl-dim:rgba(240,230,232,0.6);
+  --blush:#E8C4C8;--nude:#C9A6A0;
+  --text-primary:#F5EDEE;--text-secondary:rgba(245,237,238,0.65);--text-muted:rgba(245,237,238,0.38);
+  --border-pearl:rgba(240,230,232,0.12);--border-rose:rgba(201,135,143,0.3);--border-champagne:rgba(212,184,150,0.25);
+  --shadow-soft:0 8px 32px rgba(26,14,20,0.5);--shadow-rose:0 4px 20px rgba(201,135,143,0.15);
+  --r-sm:10px;--r-md:14px;--r-lg:20px;--r-xl:28px;--r-pill:100px;
+  --ease-out:cubic-bezier(0.22,1,0.36,1);--ease-spring:cubic-bezier(0.34,1.56,0.64,1);
+  --t-fast:0.2s var(--ease-out);--t-base:0.35s var(--ease-out);
+  --font-display:'Playfair Display','Noto Sans SC',serif;
+  --font-body:'DM Sans','Noto Sans SC',sans-serif;
+  --font-cn:'Noto Sans SC',sans-serif;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;overflow:hidden;}
+body{font-family:var(--font-body);background:var(--bg-deep);color:var(--text-primary);-webkit-font-smoothing:antialiased;}
+::-webkit-scrollbar{width:3px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--border-rose);border-radius:3px;}
+
+#app{width:100%;height:100%;position:relative;}
+.page{position:absolute;inset:0;display:none;flex-direction:column;opacity:0;transition:opacity 0.45s var(--ease-out);z-index:1;will-change:opacity;}
+.page.active{display:flex;opacity:1;z-index:10;}
+
+/* Glass */
+.glass{background:var(--bg-glass);backdrop-filter:blur(24px) saturate(1.3);-webkit-backdrop-filter:blur(24px) saturate(1.3);border:1px solid var(--border-pearl);box-shadow:var(--shadow-soft),inset 0 1px 0 rgba(255,255,255,0.04);}
+.glass-rose{background:rgba(201,135,143,0.08);backdrop-filter:blur(20px) saturate(1.2);-webkit-backdrop-filter:blur(20px) saturate(1.2);border:1px solid var(--border-rose);box-shadow:var(--shadow-rose);}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:13px 28px;border-radius:var(--r-md);font-family:var(--font-body);font-size:14px;font-weight:600;cursor:pointer;transition:all var(--t-base);border:none;text-decoration:none;white-space:nowrap;position:relative;overflow:hidden;}
+.btn::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,0.1),transparent);opacity:0;transition:opacity var(--t-fast);}
+.btn:hover::after{opacity:1;}
+.btn-rose{background:linear-gradient(135deg,var(--rose),#B87A82);color:#fff;box-shadow:0 4px 16px rgba(201,135,143,0.3);}
+.btn-rose:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(201,135,143,0.4);}
+.btn-rose:active{transform:scale(0.96);}
+.btn-champagne{background:linear-gradient(135deg,var(--champagne),#C4A882);color:var(--bg-deep);box-shadow:0 4px 16px rgba(212,184,150,0.25);font-weight:700;}
+.btn-champagne:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(212,184,150,0.35);}
+.btn-glass{background:var(--bg-glass);backdrop-filter:blur(16px);border:1px solid var(--border-rose);color:var(--rose-light);border-radius:var(--r-md);}
+.btn-glass:hover{background:var(--bg-glass-hover);border-color:var(--rose);transform:translateY(-1px);}
+.btn-sm{padding:8px 16px;font-size:12px;border-radius:var(--r-sm);}
+.btn-xs{padding:6px 12px;font-size:11px;border-radius:6px;letter-spacing:0.02em;}
+
+/* ═══ HOME ═══ */
+#homePage{background:var(--bg-deep);overflow-y:auto;overflow-x:hidden;}
+.home-ambient{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
+.ambient-orb{position:absolute;border-radius:50%;filter:blur(80px);animation:orbFloat 12s ease-in-out infinite;}
+.orb-1{width:500px;height:500px;top:-15%;right:-10%;background:radial-gradient(circle,rgba(201,135,143,0.12),transparent 70%);animation-duration:10s;}
+.orb-2{width:350px;height:350px;bottom:-10%;left:-5%;background:radial-gradient(circle,rgba(212,184,150,0.08),transparent 70%);animation-duration:14s;animation-delay:-3s;}
+.orb-3{width:200px;height:200px;top:40%;left:30%;background:radial-gradient(circle,rgba(232,196,200,0.06),transparent 70%);animation-duration:16s;animation-delay:-7s;}
+@keyframes orbFloat{0%,100%{transform:translate(0,0) scale(1);}33%{transform:translate(20px,-15px) scale(1.05);}66%{transform:translate(-15px,10px) scale(0.95);}}
+.grain{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:0.03;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");background-size:200px 200px;}
+
+.home-content{position:relative;z-index:2;min-height:100%;display:flex;flex-direction:column;padding:0 24px;max-width:640px;margin:0 auto;}
+.nav{display:flex;align-items:center;justify-content:space-between;padding:18px 0;flex-shrink:0;}
+.logo{display:flex;align-items:center;gap:10px;cursor:pointer;}
+.logo-mark{width:38px;height:38px;background:linear-gradient(135deg,var(--rose),var(--champagne));border-radius:var(--r-md);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;}
+.logo-mark::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,0.2),transparent);}
+.logo-mark i{font-size:16px;color:#fff;z-index:1;}
+.logo-text{font-family:var(--font-display);font-size:22px;font-weight:700;background:linear-gradient(135deg,var(--pearl),var(--champagne-light));-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:0.02em;}
+
+.hero{flex:1;display:flex;flex-direction:column;justify-content:center;padding:16px 0 32px;}
+.hero-eyebrow{display:inline-flex;align-items:center;gap:6px;padding:6px 14px 6px 10px;background:rgba(201,135,143,0.08);border:1px solid var(--border-rose);border-radius:var(--r-pill);font-size:11px;color:var(--rose-light);margin-bottom:22px;width:fit-content;letter-spacing:0.06em;text-transform:uppercase;font-weight:600;}
+.hero-eyebrow .dot{width:6px;height:6px;background:var(--rose);border-radius:50%;animation:pulse 2s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+.hero h1{font-family:var(--font-display);font-size:clamp(32px,8vw,48px);font-weight:700;line-height:1.15;margin-bottom:18px;letter-spacing:-0.01em;}
+.hero h1 .rose{background:linear-gradient(135deg,var(--rose-light),var(--champagne-light));-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-style:italic;}
+.hero h1 .champagne{background:linear-gradient(135deg,var(--champagne),var(--pearl));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.hero-desc{font-size:15px;color:var(--text-secondary);line-height:1.75;margin-bottom:32px;max-width:460px;font-weight:300;}
+.hero-actions{display:flex;gap:12px;flex-wrap:wrap;}
+.hero-stats{display:flex;gap:36px;margin-top:44px;padding-top:28px;border-top:1px solid var(--border-pearl);}
+.stat{display:flex;flex-direction:column;gap:4px;cursor:pointer;transition:transform var(--t-fast);}
+.stat:hover{transform:translateY(-2px);}
+.stat-value{font-family:var(--font-display);font-size:26px;font-weight:700;color:var(--champagne);}
+.stat-label{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;}
+
+.features{padding:36px 0 48px;}
+.section-head{font-family:var(--font-display);font-size:20px;font-weight:600;margin-bottom:20px;display:flex;align-items:center;gap:12px;}
+.section-head::before{content:'';width:3px;height:20px;background:linear-gradient(180deg,var(--rose),var(--champagne));border-radius:2px;}
+.feat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.feat-card{padding:18px;border-radius:var(--r-lg);transition:all var(--t-base);position:relative;overflow:hidden;cursor:pointer;}
+.feat-card::before{content:'';position:absolute;top:0;right:0;width:60px;height:60px;background:radial-gradient(circle,var(--rose-glow),transparent);opacity:0;transition:opacity var(--t-base);}
+.feat-card:hover::before{opacity:1;}
+.feat-card:hover{border-color:var(--border-rose);transform:translateY(-3px);box-shadow:var(--shadow-rose);}
+.feat-card:active{transform:scale(0.97);}
+.feat-icon{width:36px;height:36px;background:rgba(201,135,143,0.1);border:1px solid var(--border-rose);border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center;font-size:15px;color:var(--rose);margin-bottom:12px;}
+.feat-card h3{font-family:var(--font-cn);font-size:13px;font-weight:600;margin-bottom:5px;color:var(--pearl);}
+.feat-card p{font-size:11px;color:var(--text-muted);line-height:1.55;}
+
+.disclaimer{padding:14px 18px;margin:0 0 28px;background:rgba(212,184,150,0.06);border:1px solid rgba(212,184,150,0.15);border-radius:var(--r-md);font-size:11px;color:rgba(212,184,150,0.75);line-height:1.65;display:flex;gap:8px;}
+.disclaimer i{margin-top:2px;flex-shrink:0;}
+
+/* Quick action bar at bottom of home */
+.quick-bar{display:flex;gap:8px;padding:0 0 28px;flex-shrink:0;}
+.quick-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 8px;background:var(--bg-glass);backdrop-filter:blur(16px);border:1px solid var(--border-pearl);border-radius:var(--r-lg);cursor:pointer;transition:all var(--t-base);font-size:10px;color:var(--text-secondary);text-align:center;}
+.quick-item i{font-size:20px;color:var(--rose);}
+.quick-item:hover{border-color:var(--border-rose);transform:translateY(-2px);box-shadow:var(--shadow-rose);}
+.quick-item:active{transform:scale(0.95);}
+
+/* ═══ SCAN ═══ */
+#scanPage{background:var(--bg-deep);}
+.scan-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;position:relative;}
+
+.scan-camera-box{width:280px;height:340px;border-radius:50%;overflow:hidden;position:relative;border:2px solid var(--rose);box-shadow:0 0 60px rgba(201,135,143,0.12),inset 0 0 40px rgba(201,135,143,0.05);}
+.scan-camera-box video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1);}
+.scan-camera-box .cam-placeholder{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(42,26,34,0.8);gap:12px;}
+.scan-camera-box .cam-placeholder i{font-size:64px;color:rgba(201,135,143,0.15);}
+.scan-camera-box .cam-placeholder span{font-size:12px;color:var(--text-muted);}
+.scan-beam{position:absolute;left:12%;right:12%;height:1.5px;background:linear-gradient(90deg,transparent,var(--rose-light),var(--champagne-light),var(--rose-light),transparent);box-shadow:0 0 20px rgba(201,135,143,0.4),0 0 40px rgba(201,135,143,0.15);z-index:5;animation:beamSweep 2.5s ease-in-out infinite;pointer-events:none;}
+@keyframes beamSweep{0%{top:18%;opacity:0.7;}50%{top:78%;opacity:1;}100%{top:18%;opacity:0.7;}}
+.scan-overlay{position:absolute;inset:0;border-radius:50%;pointer-events:none;z-index:4;}
+.scan-overlay svg{width:100%;height:100%;}
+
+.scan-progress{width:240px;margin-top:28px;}
+.scan-bar{width:100%;height:3px;background:var(--border-pearl);border-radius:2px;overflow:hidden;}
+.scan-fill{height:100%;background:linear-gradient(90deg,var(--rose),var(--champagne));border-radius:2px;width:0%;transition:width 0.3s;}
+.scan-pct{text-align:center;margin-top:8px;font-size:12px;color:var(--text-muted);font-weight:300;}
+.scan-title{margin-top:24px;text-align:center;font-family:var(--font-display);font-size:20px;font-weight:600;color:var(--pearl);}
+.scan-sub{margin-top:6px;text-align:center;font-size:13px;color:var(--text-muted);font-weight:300;}
+.scan-tips{display:flex;gap:24px;margin-top:24px;}
+.scan-tip{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;}
+.scan-tip i{font-size:18px;color:var(--rose);}
+
+.back-btn{position:absolute;top:16px;left:16px;width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:var(--bg-glass);backdrop-filter:blur(16px);border:1px solid var(--border-pearl);border-radius:50%;color:var(--text-secondary);cursor:pointer;z-index:20;transition:all var(--t-fast);font-size:14px;}
+.back-btn:hover{border-color:var(--rose);color:var(--rose);}
+
+/* Camera permission prompt */
+.cam-prompt{text-align:center;max-width:280px;}
+.cam-prompt i{font-size:48px;color:var(--rose);margin-bottom:16px;}
+.cam-prompt h3{font-family:var(--font-display);font-size:18px;font-weight:600;color:var(--pearl);margin-bottom:8px;}
+.cam-prompt p{font-size:13px;color:var(--text-muted);line-height:1.6;margin-bottom:20px;}
+
+/* ═══ SIM ═══ */
+#simPage{background:var(--bg-deep);}
+.sim-wrap{flex:1;display:flex;flex-direction:column;position:relative;overflow:hidden;}
+.sim-bar{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;flex-shrink:0;z-index:20;}
+.sim-bar-left{display:flex;align-items:center;gap:10px;}
+.sim-bar-title{font-family:var(--font-display);font-size:16px;font-weight:600;color:var(--pearl);}
+.sim-viewport{flex:1;position:relative;min-height:0;}
+#simCanvas{width:100%;height:100%;display:block;touch-action:none;}
+.part-labels{position:absolute;inset:0;pointer-events:none;z-index:5;}
+.part-label{position:absolute;padding:4px 10px;background:rgba(201,135,143,0.1);border:1px solid rgba(201,135,143,0.3);border-radius:var(--r-pill);font-size:10px;font-weight:500;color:var(--rose-light);pointer-events:auto;cursor:pointer;transition:all var(--t-fast);white-space:nowrap;letter-spacing:0.03em;backdrop-filter:blur(8px);}
+.part-label:hover,.part-label.active{background:rgba(201,135,143,0.2);border-color:var(--rose);box-shadow:0 0 12px rgba(201,135,143,0.2);}
+
+.style-tabs{display:flex;gap:8px;padding:8px 16px;overflow-x:auto;flex-shrink:0;}
+.style-tab{padding:8px 16px;background:var(--bg-glass);backdrop-filter:blur(12px);border:1px solid var(--border-pearl);border-radius:var(--r-pill);font-size:12px;font-weight:500;color:var(--text-secondary);cursor:pointer;white-space:nowrap;transition:all var(--t-fast);}
+.style-tab.active{background:rgba(201,135,143,0.12);border-color:var(--rose);color:var(--rose-light);}
+.style-tab:hover:not(.active){border-color:rgba(240,230,232,0.2);}
+
+.sim-controls{padding:10px 16px 20px;flex-shrink:0;max-height:42vh;overflow-y:auto;}
+.fill-ctrl{margin-bottom:14px;}
+.fill-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.fill-name{font-size:13px;font-weight:500;color:var(--pearl);}
+.fill-val{font-size:13px;font-weight:600;color:var(--champagne);font-family:var(--font-display);}
+.fill-slider{-webkit-appearance:none;width:100%;height:3px;background:var(--border-pearl);border-radius:2px;outline:none;}
+.fill-slider::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;background:linear-gradient(135deg,var(--rose),var(--champagne));border-radius:50%;cursor:pointer;box-shadow:0 2px 10px rgba(201,135,143,0.35);transition:transform var(--t-fast);}
+.fill-slider::-webkit-slider-thumb:hover{transform:scale(1.15);}
+
+.scheme{padding:16px;border-radius:var(--r-lg);margin-bottom:10px;}
+.scheme h4{font-family:var(--font-cn);font-size:13px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px;color:var(--pearl);}
+.scheme h4 i{color:var(--rose);font-size:12px;}
+.scheme-items{display:flex;flex-direction:column;gap:6px;}
+.scheme-row{display:flex;justify-content:space-between;align-items:center;font-size:12px;padding:8px 12px;background:rgba(255,255,255,0.02);border-radius:var(--r-sm);}
+.scheme-row .name{color:var(--text-secondary);font-weight:400;}
+.scheme-row .val{color:var(--champagne);font-weight:500;}
+.scheme-total{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:12px;border-top:1px solid var(--border-pearl);font-size:15px;font-weight:700;color:var(--pearl);}
+.scheme-total .price{font-family:var(--font-display);color:var(--champagne);}
+
+.sim-bottom{display:flex;gap:8px;padding:0 16px 14px;}
+.sim-bottom .btn{flex:1;}
+
+/* ═══ CASES ═══ */
+#casePage{background:var(--bg-deep);}
+.case-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.case-header{display:flex;align-items:center;gap:12px;padding:12px 16px;flex-shrink:0;}
+.case-filter{display:flex;gap:6px;padding:0 16px 10px;overflow-x:auto;flex-shrink:0;}
+.case-list{flex:1;overflow-y:auto;padding:0 16px 16px;}
+.case-card{padding:16px;border-radius:var(--r-lg);margin-bottom:10px;cursor:pointer;transition:all var(--t-base);}
+.case-card:hover{border-color:var(--border-rose);transform:translateY(-2px);box-shadow:var(--shadow-rose);}
+.case-top{display:flex;gap:12px;margin-bottom:12px;}
+.case-avatar{width:42px;height:42px;border-radius:50%;background:rgba(201,135,143,0.1);border:1px solid var(--border-rose);display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--rose);flex-shrink:0;}
+.case-doc-info{flex:1;}
+.case-doc-name{font-size:14px;font-weight:600;color:var(--pearl);margin-bottom:2px;}
+.case-doc-title{font-size:11px;color:var(--text-muted);}
+.case-style-tag{padding:3px 10px;background:rgba(212,184,150,0.1);border:1px solid var(--border-champagne);border-radius:var(--r-pill);font-size:10px;color:var(--champagne);white-space:nowrap;font-weight:500;}
+.case-models{display:flex;gap:8px;margin-bottom:12px;}
+.case-model-box{flex:1;height:90px;background:rgba(255,255,255,0.02);border:1px solid var(--border-pearl);border-radius:var(--r-md);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font-size:10px;color:var(--text-muted);transition:all var(--t-fast);}
+.case-model-box i{font-size:22px;color:var(--rose);opacity:0.4;}
+.case-model-box .after-icon{color:var(--champagne);opacity:0.7;}
+.case-meta{display:flex;gap:14px;font-size:11px;color:var(--text-muted);}
+.case-meta span{display:flex;align-items:center;gap:4px;}
+.case-meta i{color:var(--rose);font-size:9px;}
+
+/* ═══ DOCTORS ═══ */
+#doctorPage{background:var(--bg-deep);}
+.doc-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.doc-list{flex:1;overflow-y:auto;padding:0 16px 16px;}
+.doc-card{padding:16px;border-radius:var(--r-lg);margin-bottom:10px;cursor:pointer;transition:all var(--t-base);}
+.doc-card:hover{border-color:var(--border-rose);box-shadow:var(--shadow-rose);}
+.doc-main{display:flex;gap:14px;margin-bottom:12px;}
+.doc-avatar{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,rgba(201,135,143,0.12),rgba(212,184,150,0.08));border:1.5px solid var(--border-rose);display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--rose);flex-shrink:0;}
+.doc-info{flex:1;}
+.doc-name-row{display:flex;align-items:center;gap:8px;margin-bottom:3px;}
+.doc-name{font-size:15px;font-weight:600;color:var(--pearl);}
+.doc-rank{padding:2px 7px;background:rgba(212,184,150,0.1);border-radius:6px;font-size:10px;color:var(--champagne);font-weight:500;}
+.doc-exp{font-size:11px;color:var(--text-muted);margin-bottom:6px;}
+.doc-tags{display:flex;gap:5px;flex-wrap:wrap;}
+.doc-tag{padding:3px 8px;background:rgba(255,255,255,0.04);border-radius:6px;font-size:10px;color:var(--text-secondary);}
+.doc-stats{display:flex;gap:28px;}
+.doc-stat{display:flex;flex-direction:column;gap:2px;}
+.doc-stat-val{font-family:var(--font-display);font-size:17px;font-weight:700;color:var(--champagne);}
+.doc-stat-label{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;}
+
+/* ═══ APPOINTMENT ═══ */
+#apptPage{background:var(--bg-deep);}
+.appt-wrap{flex:1;overflow-y:auto;padding:16px;}
+.appt-sec{margin-bottom:20px;}
+.appt-sec h3{font-family:var(--font-cn);font-size:14px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px;color:var(--pearl);}
+.appt-sec h3 i{color:var(--rose);font-size:13px;}
+.appt-doc-card{padding:14px;border-radius:var(--r-lg);}
+.appt-doc-row{display:flex;align-items:center;gap:12px;}
+.appt-doc-avatar{width:44px;height:44px;border-radius:50%;background:rgba(201,135,143,0.1);display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--rose);}
+.appt-doc-info h4{font-size:14px;font-weight:600;color:var(--pearl);margin-bottom:2px;}
+.appt-doc-info p{font-size:11px;color:var(--text-muted);}
+.date-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+.date-slot{padding:10px;text-align:center;background:var(--bg-glass);backdrop-filter:blur(12px);border:1px solid var(--border-pearl);border-radius:var(--r-md);cursor:pointer;transition:all var(--t-fast);font-size:13px;}
+.date-slot:hover{border-color:var(--border-rose);}
+.date-slot.active{background:rgba(201,135,143,0.12);border-color:var(--rose);color:var(--rose-light);}
+.date-slot .day{font-weight:600;margin-bottom:2px;}
+.date-slot .wd{font-size:10px;color:var(--text-muted);}
+.date-slot.active .wd{color:var(--rose);}
+.time-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.time-slot{padding:10px;text-align:center;background:var(--bg-glass);backdrop-filter:blur(12px);border:1px solid var(--border-pearl);border-radius:var(--r-md);cursor:pointer;transition:all var(--t-fast);font-size:13px;}
+.time-slot:hover{border-color:var(--border-rose);}
+.time-slot.active{background:rgba(201,135,143,0.12);border-color:var(--rose);color:var(--rose-light);}
+.time-slot.disabled{opacity:0.25;pointer-events:none;}
+.form-group{margin-bottom:12px;}
+.form-group label{display:block;font-size:12px;color:var(--text-secondary);margin-bottom:6px;}
+.form-input{width:100%;padding:10px 14px;background:var(--bg-glass);border:1px solid var(--border-pearl);border-radius:var(--r-md);color:var(--text-primary);font-family:var(--font-body);font-size:14px;outline:none;transition:border-color var(--t-fast);}
+.form-input:focus{border-color:var(--rose);}
+.form-input::placeholder{color:var(--text-muted);}
+.appt-summary{padding:16px;border-radius:var(--r-lg);margin-bottom:16px;}
+.summary-row{display:flex;justify-content:space-between;font-size:12px;margin-bottom:8px;}
+.summary-row .label{color:var(--text-muted);}
+.summary-row.total{margin-top:8px;padding-top:8px;border-top:1px solid var(--border-pearl);font-size:15px;font-weight:700;color:var(--pearl);}
+.summary-row.total .val{font-family:var(--font-display);color:var(--champagne);}
+
+/* ═══ SUCCESS ═══ */
+#successPage{background:var(--bg-deep);}
+.success-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;text-align:center;}
+.success-icon{width:76px;height:76px;background:rgba(201,135,143,0.1);border:2px solid var(--rose);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:32px;color:var(--rose);margin-bottom:24px;animation:successIn 0.5s var(--ease-spring);}
+@keyframes successIn{0%{transform:scale(0) rotate(-10deg);}100%{transform:scale(1) rotate(0);}}
+.success-wrap h2{font-family:var(--font-display);font-size:24px;font-weight:700;color:var(--pearl);margin-bottom:8px;}
+.success-wrap>p{font-size:13px;color:var(--text-muted);margin-bottom:28px;font-weight:300;}
+.success-detail{width:100%;max-width:400px;padding:20px;border-radius:var(--r-lg);text-align:left;margin-bottom:24px;}
+.s-row{display:flex;justify-content:space-between;font-size:12px;margin-bottom:8px;}
+.s-row .label{color:var(--text-muted);}
+
+/* ═══ MODAL ═══ */
+.modal-bg{position:fixed;inset:0;background:rgba(26,14,20,0.75);backdrop-filter:blur(6px);z-index:100;display:none;align-items:center;justify-content:center;padding:24px;}
+.modal-bg.active{display:flex;}
+.modal-body{width:100%;max-width:480px;max-height:85vh;overflow-y:auto;padding:24px;border-radius:var(--r-xl);animation:modalUp 0.35s var(--ease-out);}
+@keyframes modalUp{from{opacity:0;transform:translateY(16px) scale(0.97);}to{opacity:1;transform:translateY(0) scale(1);}}
+.modal-x{float:right;width:30px;height:30px;background:var(--bg-glass);border:1px solid var(--border-pearl);border-radius:50%;color:var(--text-secondary);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;transition:all var(--t-fast);}
+.modal-x:hover{border-color:var(--rose);color:var(--rose);}
+.case-3d-split{width:100%;height:220px;background:rgba(255,255,255,0.02);border:1px solid var(--border-pearl);border-radius:var(--r-lg);margin:16px 0;display:flex;overflow:hidden;}
+.case-split-side{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;position:relative;}
+.case-split-side+.case-split-side{border-left:1px solid var(--border-pearl);}
+.case-split-side span{font-size:10px;color:var(--text-muted);position:absolute;top:10px;text-transform:uppercase;letter-spacing:0.08em;}
+.case-split-side i{font-size:40px;color:rgba(201,135,143,0.25);}
+.case-split-side .after-3d{color:var(--champagne);opacity:0.7;}
+.case-info-rows{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;}
+.case-info-row{display:flex;justify-content:space-between;font-size:12px;}
+.case-info-row .label{color:var(--text-muted);}
+.case-info-row .val{color:var(--pearl);font-weight:500;}
+
+/* ═══ LOADING ═══ */
+.loading{position:fixed;inset:0;background:var(--bg-deep);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:200;transition:opacity 0.5s;}
+.loading.gone{opacity:0;pointer-events:none;}
+.loading-ring{width:36px;height:36px;border:2px solid var(--border-pearl);border-top-color:var(--rose);border-radius:50%;animation:spin 0.7s linear infinite;margin-bottom:14px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading p{font-size:13px;color:var(--text-muted);font-weight:300;}
+
+/* ═══ TOAST ═══ */
+.toast{position:fixed;bottom:72px;left:50%;transform:translateX(-50%) translateY(12px);padding:10px 22px;background:var(--bg-glass);backdrop-filter:blur(20px);border:1px solid var(--border-rose);border-radius:var(--r-pill);font-size:12px;color:var(--rose-light);z-index:300;opacity:0;transition:all 0.3s var(--ease-out);pointer-events:none;white-space:nowrap;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+@media(min-width:768px){.feat-grid{grid-template-columns:repeat(3,1fr);}.hero h1{font-size:48px;}.home-content{max-width:680px;}}
+
+/* ═══ PRODUCT SECTION ═══ */
+.products-section{padding:32px 0 0;}
+.prod-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.prod-card{padding:14px;border-radius:var(--r-lg);cursor:pointer;transition:all var(--t-base);display:flex;gap:12px;align-items:center;position:relative;overflow:hidden;}
+.prod-card::before{content:'';position:absolute;top:-10px;right:-10px;width:50px;height:50px;background:radial-gradient(circle,var(--rose-glow),transparent);opacity:0;transition:opacity var(--t-base);}
+.prod-card:hover::before{opacity:1;}
+.prod-card:hover{border-color:var(--border-rose);transform:translateY(-2px);box-shadow:var(--shadow-rose);}
+.prod-card:active{transform:scale(0.97);}
+.prod-img{width:48px;height:48px;border-radius:var(--r-sm);background:linear-gradient(135deg,rgba(201,135,143,0.1),rgba(212,184,150,0.08));border:1px solid var(--border-pearl);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;overflow:hidden;}
+.prod-img img{width:100%;height:100%;object-fit:cover;border-radius:var(--r-sm);}
+.prod-info{flex:1;min-width:0;}
+.prod-name{font-size:13px;font-weight:600;color:var(--pearl);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.prod-brand{font-size:10px;color:var(--text-muted);margin-bottom:3px;}
+.prod-price{font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--champagne);}
+.prod-tag{position:absolute;top:8px;right:8px;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:600;letter-spacing:0.03em;}
+.prod-tag.fda{background:rgba(76,175,80,0.12);color:#81C784;border:1px solid rgba(76,175,80,0.2);}
+.prod-tag.cn{background:rgba(212,184,150,0.12);color:var(--champagne);border:1px solid var(--border-champagne);}
+
+/* Product Detail Modal */
+.product-detail{padding:24px;border-radius:var(--r-xl);max-height:85vh;overflow-y:auto;}
+.pd-header{display:flex;gap:16px;margin-bottom:20px;align-items:flex-start;}
+.pd-img{width:80px;height:80px;border-radius:var(--r-lg);background:linear-gradient(135deg,rgba(201,135,143,0.12),rgba(212,184,150,0.08));border:1px solid var(--border-rose);display:flex;align-items:center;justify-content:center;font-size:36px;flex-shrink:0;overflow:hidden;}
+.pd-img img{width:100%;height:100%;object-fit:cover;border-radius:var(--r-lg);}
+.pd-title{flex:1;}
+.pd-name{font-family:var(--font-display);font-size:20px;font-weight:700;color:var(--pearl);margin-bottom:2px;}
+.pd-brand{font-size:12px;color:var(--text-muted);margin-bottom:6px;}
+.pd-price-row{display:flex;align-items:baseline;gap:4px;}
+.pd-price{font-family:var(--font-display);font-size:22px;font-weight:700;color:var(--champagne);}
+.pd-unit{font-size:11px;color:var(--text-muted);}
+.pd-badges{display:flex;gap:6px;margin-top:8px;}
+.pd-badge{padding:3px 8px;border-radius:4px;font-size:10px;font-weight:600;}
+.pd-badge.approved{background:rgba(76,175,80,0.12);color:#81C784;border:1px solid rgba(76,175,80,0.2);}
+.pd-badge.china{background:rgba(212,184,150,0.12);color:var(--champagne);border:1px solid var(--border-champagne);}
+.pd-desc{font-size:13px;color:var(--text-secondary);line-height:1.7;margin-bottom:18px;font-weight:300;}
+.pd-specs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px;}
+.pd-spec{padding:10px 12px;background:rgba(255,255,255,0.02);border:1px solid var(--border-pearl);border-radius:var(--r-sm);}
+.pd-spec-label{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;}
+.pd-spec-value{font-size:13px;color:var(--pearl);font-weight:500;}
+.pd-features{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;}
+.pd-feature{padding:5px 10px;background:rgba(201,135,143,0.08);border:1px solid var(--border-rose);border-radius:var(--r-pill);font-size:11px;color:var(--rose-light);}
+.pd-suitable-title{font-size:13px;font-weight:600;color:var(--pearl);margin-bottom:8px;}
+.pd-suitable{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;}
+.pd-suit-item{padding:4px 10px;background:rgba(255,255,255,0.04);border-radius:var(--r-sm);font-size:11px;color:var(--text-secondary);}
+
+/* Clickable product name in scheme rows */
+.scheme-row .name .prod-link{color:var(--rose-light);cursor:pointer;border-bottom:1px dashed var(--border-rose);transition:color var(--t-fast);}
+.scheme-row .name .prod-link:hover{color:var(--pearl);}
+
+/* Clickable product in case info */
+.case-info-row .val .prod-link{color:var(--champagne);cursor:pointer;border-bottom:1px dashed var(--border-champagne);transition:color var(--t-fast);}
+.case-info-row .val .prod-link:hover{color:var(--pearl);}
+
+/* Clickable product in summary */
+.summary-row .label .prod-link{color:var(--rose-light);cursor:pointer;border-bottom:1px dashed var(--border-rose);transition:color var(--t-fast);}
+.summary-row .label .prod-link:hover{color:var(--pearl);}
+
+/* Quick bar add product */
+.quick-item .fa-flask{color:var(--champagne);}
+
+/* Scan stages */
+.scan-stage{transition:all var(--t-fast);}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="loading" id="loadScreen"><div class="loading-ring"></div><p>加载3D引擎中...</p></div>
+
+  <!-- ═══ HOME ═══ -->
+  <div class="page active" id="homePage">
+    <div class="home-ambient"><div class="ambient-orb orb-1"></div><div class="ambient-orb orb-2"></div><div class="ambient-orb orb-3"></div></div>
+    <div class="grain"></div>
+    <div class="home-content">
+      <div class="nav">
+        <div class="logo" onclick="goToPage('homePage')"><div class="logo-mark"><i class="fas fa-gem"></i></div><div class="logo-text">Meisu3D</div></div>
+        <button class="btn btn-glass btn-xs" onclick="showToast('登录功能即将上线')"><i class="fas fa-user"></i> 登录</button>
+      </div>
+
+      <div class="hero">
+        <div class="hero-eyebrow"><span class="dot"></span> 全3D模拟 · 真实预览</div>
+        <h1>提前看见<br><span class="rose">变美后</span>的<span class="champagne">自己</span></h1>
+        <p class="hero-desc">国内首个全3D化医美填充模拟平台。180°扫脸 → 3D建模 → 实时填充模拟 → 多风格方案 → 3D案例对比，一站式决策闭环。</p>
+        <div class="hero-actions">
+          <button class="btn btn-rose" onclick="startSimulation()"><i class="fas fa-magic"></i> 免费3D模拟</button>
+          <button class="btn btn-glass" onclick="goToPage('casePage')"><i class="fas fa-cubes"></i> 浏览3D案例</button>
+        </div>
+        <div class="hero-stats">
+          <div class="stat" onclick="showToast('合作机构持续增长中')"><span class="stat-value">30+</span><span class="stat-label">合作机构</span></div>
+          <div class="stat" onclick="goToPage('casePage')"><span class="stat-value">5K+</span><span class="stat-label">3D案例</span></div>
+          <div class="stat" onclick="goToPage('doctorPage')"><span class="stat-value">98%</span><span class="stat-label">满意度</span></div>
+        </div>
+      </div>
+
+      <div class="features">
+        <div class="section-head">核心功能</div>
+        <div class="feat-grid">
+          <div class="feat-card glass" onclick="startSimulation()">
+            <div class="feat-icon"><i class="fas fa-cube"></i></div><h3>3D人脸建模</h3><p>180°扫描，本地生成骨骼+软组织分层3D模型</p>
+          </div>
+          <div class="feat-card glass" onclick="startSimulation()">
+            <div class="feat-icon"><i class="fas fa-sliders-h"></i></div><h3>实时填充模拟</h3><p>滑动调整填充量，实时查看3D效果</p>
+          </div>
+          <div class="feat-card glass" onclick="startSimulation()">
+            <div class="feat-icon"><i class="fas fa-palette"></i></div><h3>多风格方案</h3><p>系统推荐/韩式自然/欧美立体</p>
+          </div>
+          <div class="feat-card glass" onclick="goToPage('casePage')">
+            <div class="feat-icon"><i class="fas fa-eye"></i></div><h3>3D案例对比</h3><p>全部案例为3D模型，360°旋转查看</p>
+          </div>
+          <div class="feat-card glass" onclick="goToPage('doctorPage')">
+            <div class="feat-icon"><i class="fas fa-user-md"></i></div><h3>精准医生匹配</h3><p>部位+风格双维度，案例说话</p>
+          </div>
+          <div class="feat-card glass" onclick="goToPage('doctorPage')">
+            <div class="feat-icon"><i class="fas fa-calendar-check"></i></div><h3>在线预约</h3><p>选时间、确认方案、一键预约</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Products Section -->
+      <div class="products-section">
+        <div class="section-head">填充产品</div>
+        <div class="prod-grid" id="prodGrid"></div>
+      </div>
+
+      <!-- Quick action bar -->
+      <div class="quick-bar">
+        <div class="quick-item" onclick="startSimulation()"><i class="fas fa-camera"></i><span>3D扫描</span></div>
+        <div class="quick-item" onclick="goToPage('casePage')"><i class="fas fa-cubes"></i><span>3D案例</span></div>
+        <div class="quick-item" onclick="goToPage('doctorPage')"><i class="fas fa-user-md"></i><span>找医生</span></div>
+        <div class="quick-item" onclick="showProductList()"><i class="fas fa-flask"></i><span>产品</span></div>
+        <div class="quick-item" onclick="goToPage('simPage');setTimeout(initScene,200)"><i class="fas fa-sliders-h"></i><span>填充模拟</span></div>
+      </div>
+
+      <div class="disclaimer">
+        <i class="fas fa-shield-alt"></i>
+        <span>⚠️ 3D模拟效果仅供参考，不构成任何医疗建议。请以医生面诊意见为准。</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SCAN ═══ -->
+  <div class="page" id="scanPage">
+    <div class="back-btn" onclick="stopCamera();goToPage('homePage')"><i class="fas fa-arrow-left"></i></div>
+    <div class="scan-wrap">
+      <div class="scan-camera-box" id="scanCameraBox">
+        <div class="cam-placeholder" id="camPlaceholder">
+          <i class="fas fa-video"></i>
+          <span>等待开启摄像头</span>
+        </div>
+        <video id="camVideo" autoplay playsinline style="display:none"></video>
+        <div class="scan-beam" id="scanBeam" style="display:none"></div>
+        <!-- Scanning guidance overlay -->
+        <div id="scanOverlay" style="display:none;position:absolute;inset:0;z-index:6;pointer-events:none;">
+          <svg width="100%" height="100%" viewBox="0 0 280 340" style="position:absolute;inset:0">
+            <!-- Face outline guide -->
+            <ellipse id="guideOval" cx="140" cy="160" rx="95" ry="130" fill="none" stroke="rgba(201,135,143,0.35)" stroke-width="1.5" stroke-dasharray="6 4"/>
+            <!-- Zone indicators -->
+            <g id="zoneFront" transform="translate(105,80)">
+              <rect width="70" height="180" rx="35" fill="rgba(201,135,143,0.08)" stroke="rgba(201,135,143,0.5)" stroke-width="1"/>
+              <text x="35" y="95" text-anchor="middle" fill="rgba(201,135,143,0.7)" font-size="9" font-family="DM Sans">正面</text>
+            </g>
+            <g id="zoneLeft" transform="translate(15,70)" style="opacity:0.3">
+              <rect width="55" height="190" rx="27" fill="rgba(212,184,150,0.08)" stroke="rgba(212,184,150,0.5)" stroke-width="1"/>
+              <text x="27" y="100" text-anchor="middle" fill="rgba(212,184,150,0.7)" font-size="9" font-family="DM Sans">左侧</text>
+            </g>
+            <g id="zoneRight" transform="translate(210,70)" style="opacity:0.3">
+              <rect width="55" height="190" rx="27" fill="rgba(212,184,150,0.08)" stroke="rgba(212,184,150,0.5)" stroke-width="1"/>
+              <text x="27" y="100" text-anchor="middle" fill="rgba(212,184,150,0.7)" font-size="9" font-family="DM Sans">右侧</text>
+            </g>
+            <!-- Checkmarks for completed zones -->
+            <g id="checkFront" style="display:none" transform="translate(125,230)"><circle r="12" fill="rgba(76,175,80,0.3)" stroke="#81C784" stroke-width="1.5"/><text x="0" y="4" text-anchor="middle" fill="#81C784" font-size="14">✓</text></g>
+            <g id="checkLeft" style="display:none" transform="translate(40,265)"><circle r="12" fill="rgba(76,175,80,0.3)" stroke="#81C784" stroke-width="1.5"/><text x="0" y="4" text-anchor="middle" fill="#81C784" font-size="14">✓</text></g>
+            <g id="checkRight" style="display:none" transform="translate(240,265)"><circle r="12" fill="rgba(76,175,80,0.3)" stroke="#81C784" stroke-width="1.5"/><text x="0" y="4" text-anchor="middle" fill="#81C784" font-size="14">✓</text></g>
+          </svg>
+        </div>
+      </div>
+      <div class="scan-progress" id="scanProgressWrap" style="visibility:hidden">
+        <div class="scan-bar"><div class="scan-fill" id="scanFill"></div></div>
+        <div class="scan-pct" id="scanPct">准备开始扫描...</div>
+      </div>
+      <div class="scan-title" id="scanTitle">3D人脸扫描</div>
+      <div class="scan-sub" id="scanSub">需要开启摄像头权限进行面部扫描</div>
+      <!-- Stage indicators -->
+      <div id="scanStages" style="display:none;margin-top:12px;gap:6px;justify-content:center;align-items:center;">
+        <div class="scan-stage" id="stage1" style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:rgba(201,135,143,0.1);border:1px solid var(--border-rose);border-radius:20px;font-size:11px;color:var(--rose-light)"><i class="fas fa-circle" style="font-size:6px"></i> 正面扫描</div>
+        <div style="width:16px;height:1px;background:var(--border-pearl)"></div>
+        <div class="scan-stage" id="stage2" style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:rgba(255,255,255,0.03);border:1px solid var(--border-pearl);border-radius:20px;font-size:11px;color:var(--text-muted)"><i class="fas fa-circle" style="font-size:6px"></i> 左侧扫描</div>
+        <div style="width:16px;height:1px;background:var(--border-pearl)"></div>
+        <div class="scan-stage" id="stage3" style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:rgba(255,255,255,0.03);border:1px solid var(--border-pearl);border-radius:20px;font-size:11px;color:var(--text-muted)"><i class="fas fa-circle" style="font-size:6px"></i> 右侧扫描</div>
+      </div>
+      <div class="scan-tips" id="scanTips">
+        <div class="scan-tip"><i class="fas fa-sun"></i><span>光线充足</span></div>
+        <div class="scan-tip"><i class="fas fa-glasses"></i><span>摘掉眼镜</span></div>
+        <div class="scan-tip"><i class="fas fa-head-side-mask"></i><span>露出全脸</span></div>
+      </div>
+      <button class="btn btn-champagne" style="margin-top:20px" id="scanBtn" onclick="requestCameraAndScan()">
+        <i class="fas fa-camera"></i> 开启摄像头并扫描
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══ SIMULATION ═══ -->
+  <div class="page" id="simPage">
+    <div class="sim-wrap">
+      <div class="sim-bar">
+        <div class="sim-bar-left">
+          <div class="back-btn" onclick="goToPage('homePage')" style="position:static"><i class="fas fa-arrow-left"></i></div>
+          <div class="sim-bar-title">3D填充模拟</div>
+        </div>
+        <button class="btn btn-glass btn-xs" onclick="toggleCompare()"><i class="fas fa-columns"></i> 对比</button>
+      </div>
+      <div class="sim-viewport">
+        <canvas id="simCanvas"></canvas>
+        <div class="part-labels">
+          <div class="part-label" style="top:22%;left:50%;transform:translateX(-50%)" onclick="selectPart('forehead')">眉弓</div>
+          <div class="part-label" style="top:32%;left:18%" onclick="selectPart('temple')">太阳穴</div>
+          <div class="part-label" style="top:32%;right:18%" onclick="selectPart('temple')">太阳穴</div>
+          <div class="part-label active" style="top:46%;left:50%;transform:translateX(-50%)" onclick="selectPart('nose')">鼻基底</div>
+          <div class="part-label" style="top:40%;left:12%" onclick="selectPart('cheek')">苹果肌</div>
+          <div class="part-label" style="top:40%;right:12%" onclick="selectPart('cheek')">苹果肌</div>
+          <div class="part-label" style="top:58%;left:24%" onclick="selectPart('nasolabial')">法令纹</div>
+          <div class="part-label" style="top:58%;right:24%" onclick="selectPart('nasolabial')">法令纹</div>
+          <div class="part-label" style="top:72%;left:50%;transform:translateX(-50%)" onclick="selectPart('chin')">下巴</div>
+        </div>
+      </div>
+      <div class="style-tabs">
+        <div class="style-tab active" data-style="recommend" onclick="switchStyle('recommend')">✨ 系统推荐</div>
+        <div class="style-tab" data-style="korean" onclick="switchStyle('korean')">🌸 韩式自然</div>
+        <div class="style-tab" data-style="western" onclick="switchStyle('western')">💎 欧美立体</div>
+      </div>
+      <div class="sim-controls">
+        <div class="fill-ctrl">
+          <div class="fill-header"><span class="fill-name" id="fillName">鼻基底</span><span class="fill-val" id="fillVal">1.0ml</span></div>
+          <input type="range" class="fill-slider" id="fillSlider" min="0" max="20" value="10" step="1" oninput="updateFill(this.value)">
+        </div>
+        <div class="scheme glass" id="schemeCard">
+          <h4><i class="fas fa-clipboard-list"></i> 当前方案</h4>
+          <div class="scheme-items" id="schemeItems"></div>
+          <div class="scheme-total"><span>预估总价</span><span class="price" id="schemeTotal">¥8,800</span></div>
+        </div>
+      </div>
+      <div class="sim-bottom">
+        <button class="btn btn-glass" onclick="goToPage('casePage')"><i class="fas fa-cubes"></i> 3D案例</button>
+        <button class="btn btn-champagne" onclick="goToDoctorPage()"><i class="fas fa-user-md"></i> 匹配医生</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ CASES ═══ -->
+  <div class="page" id="casePage">
+    <div class="case-wrap">
+      <div class="case-header"><div class="back-btn" onclick="goToPage('simPage')" style="position:static"><i class="fas fa-arrow-left"></i></div><div style="font-family:var(--font-display);font-size:17px;font-weight:600;color:var(--pearl)">3D案例库</div></div>
+      <div class="case-filter">
+        <button class="btn btn-glass btn-xs active" data-part="nose">鼻基底</button>
+        <button class="btn btn-glass btn-xs" data-part="chin">下巴</button>
+        <button class="btn btn-glass btn-xs" data-part="cheek">苹果肌</button>
+        <button class="btn btn-glass btn-xs" data-part="temple">太阳穴</button>
+        <button class="btn btn-glass btn-xs" data-part="nasolabial">法令纹</button>
+        <button class="btn btn-glass btn-xs" data-part="forehead">眉弓</button>
+      </div>
+      <div class="case-list" id="caseList"></div>
+    </div>
+  </div>
+
+  <!-- ═══ DOCTORS ═══ -->
+  <div class="page" id="doctorPage">
+    <div class="doc-wrap">
+      <div class="case-header"><div class="back-btn" onclick="goToPage('homePage')" style="position:static"><i class="fas fa-arrow-left"></i></div><div style="font-family:var(--font-display);font-size:17px;font-weight:600;color:var(--pearl)">推荐医生</div></div>
+      <div class="doc-list" id="docList"></div>
+    </div>
+  </div>
+
+  <!-- ═══ APPOINTMENT ═══ -->
+  <div class="page" id="apptPage">
+    <div class="appt-wrap">
+      <div class="case-header" style="padding:0 0 10px"><div class="back-btn" onclick="goToPage('doctorPage')" style="position:static"><i class="fas fa-arrow-left"></i></div><div style="font-family:var(--font-display);font-size:17px;font-weight:600;color:var(--pearl)">预约确认</div></div>
+      <div class="appt-sec"><h3><i class="fas fa-user-md"></i> 预约医生</h3><div class="appt-doc-card glass"><div class="appt-doc-row"><div class="appt-doc-avatar"><i class="fas fa-user-md"></i></div><div class="appt-doc-info"><h4 id="apptDocName">王丽华</h4><p id="apptDocTitle">主任医师 · 15年经验</p></div></div></div></div>
+      <div class="appt-sec"><h3><i class="fas fa-calendar"></i> 选择日期</h3><div class="date-grid" id="dateGrid"></div></div>
+      <div class="appt-sec"><h3><i class="fas fa-clock"></i> 选择时段</h3><div class="time-grid" id="timeGrid"></div></div>
+      <div class="appt-sec"><h3><i class="fas fa-user"></i> 个人信息</h3><div class="form-group"><label>姓名</label><input class="form-input" placeholder="请输入姓名" id="apptName"></div><div class="form-group"><label>手机号</label><input class="form-input" placeholder="请输入手机号" id="apptPhone" type="tel"></div></div>
+      <div class="appt-sec"><h3><i class="fas fa-receipt"></i> 方案摘要</h3><div class="appt-summary glass" id="apptSummary"></div></div>
+      <button class="btn btn-champagne" style="width:100%;margin-bottom:24px" onclick="submitAppointment()"><i class="fas fa-check-circle"></i> 确认预约</button>
+    </div>
+  </div>
+
+  <!-- ═══ SUCCESS ═══ -->
+  <div class="page" id="successPage">
+    <div class="success-wrap">
+      <div class="success-icon"><i class="fas fa-check"></i></div>
+      <h2>预约成功！</h2>
+      <p>预约凭证已生成，我们将通过短信通知您</p>
+      <div class="success-detail glass" id="successDetail"></div>
+      <button class="btn btn-glass" onclick="goToPage('homePage')"><i class="fas fa-home"></i> 返回首页</button>
+    </div>
+  </div>
+
+  <div class="modal-bg" id="caseModal"><div class="modal-body glass" id="caseModalBody"></div></div>
+  <div class="modal-bg" id="prodModal"><div class="product-detail glass" id="prodModalBody"></div></div>
+  <div class="toast" id="toast"></div>
+</div>
+
+<script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.165.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.165.0/examples/jsm/"}}</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// ═══ STATE ═══
+const S={page:'homePage',part:'nose',style:'recommend',fills:{nose:1.0,chin:0,cheek:0,temple:0,nasolabial:0,forehead:0},doctor:null,date:null,time:null,compare:false};
+const NAMES={nose:'鼻基底',chin:'下巴',cheek:'苹果肌',temple:'太阳穴',nasolabial:'法令纹',forehead:'眉弓'};
+const PRESETS={recommend:{nose:1.0,chin:0.8,cheek:0.6,temple:0.4,nasolabial:0.3,forehead:0.5},korean:{nose:0.6,chin:0.5,cheek:0.8,temple:0.3,nasolabial:0.2,forehead:0.3},western:{nose:1.5,chin:1.2,cheek:0.4,temple:0.6,nasolabial:0.3,forehead:1.0}};
+const MATS={nose:{n:'乔雅登雅致',p:8800},chin:{n:'乔雅登极致',p:12800},cheek:{n:'瑞蓝2号',p:6800},temple:{n:'艾莉薇',p:5800},nasolabial:{n:'姣兰',p:4800},forehead:{n:'乔雅登雅致',p:8800}};
+const DOCS=[
+  {id:1,name:'王丽华',rank:'主任医师',exp:15,styles:['recommend','korean'],parts:['nose','chin','cheek'],cases:328,rating:4.9,tags:['玻尿酸','自体脂肪','鼻部精雕']},
+  {id:2,name:'李明轩',rank:'副主任医师',exp:12,styles:['recommend','western'],parts:['nose','forehead','chin'],cases:256,rating:4.8,tags:['欧美立体','骨骼重塑','眉弓']},
+  {id:3,name:'张婉清',rank:'主治医师',exp:8,styles:['korean','recommend'],parts:['cheek','nasolabial','temple'],cases:189,rating:4.9,tags:['韩式自然','苹果肌','少女感']},
+  {id:4,name:'陈思远',rank:'副主任医师',exp:10,styles:['western','recommend'],parts:['nose','chin','forehead'],cases:215,rating:4.7,tags:['混血风','高鼻梁','下颌线']},
+  {id:5,name:'林雅琴',rank:'主治医师',exp:6,styles:['korean'],parts:['cheek','nasolabial','temple'],cases:142,rating:4.8,tags:['清新自然','胶原蛋白','法令纹']},
+];
+const CASES=[
+  {id:1,did:1,part:'nose',style:'recommend',mat:'乔雅登雅致',dose:'1.0ml',rec:'3-5天'},
+  {id:2,did:1,part:'nose',style:'korean',mat:'艾莉薇',dose:'0.6ml',rec:'2-3天'},
+  {id:3,did:3,part:'cheek',style:'korean',mat:'瑞蓝2号',dose:'0.8ml',rec:'3-5天'},
+  {id:4,did:2,part:'chin',style:'western',mat:'乔雅登极致',dose:'1.2ml',rec:'5-7天'},
+  {id:5,did:4,part:'forehead',style:'western',mat:'乔雅登雅致',dose:'1.0ml',rec:'3-5天'},
+  {id:6,did:5,part:'nasolabial',style:'korean',mat:'姣兰',dose:'0.4ml',rec:'2-3天'},
+];
+
+// ═══ CAMERA ═══
+let cameraStream = null;
+window.startSimulation = () => goToPage('scanPage');
+
+window.stopCamera = () => {
+  if(cameraStream){cameraStream.getTracks().forEach(t=>t.stop());cameraStream=null;}
+  const v=document.getElementById('camVideo'); if(v) v.style.display='none';
+  const p=document.getElementById('camPlaceholder'); if(p) p.style.display='flex';
+  const overlay=document.getElementById('scanOverlay'); if(overlay) overlay.style.display='none';
+  const stages=document.getElementById('scanStages'); if(stages) stages.style.display='none';
+};
+
+window.requestCameraAndScan = async () => {
+  const btn=document.getElementById('scanBtn');
+  const video=document.getElementById('camVideo');
+  const placeholder=document.getElementById('camPlaceholder');
+  const beam=document.getElementById('scanBeam');
+  const progressWrap=document.getElementById('scanProgressWrap');
+  const title=document.getElementById('scanTitle');
+  const sub=document.getElementById('scanSub');
+
+  btn.disabled=true; btn.style.opacity='0.4';
+  title.textContent='正在请求摄像头权限...';
+  sub.textContent='请在弹出的权限对话框中点击"允许"';
+
+  try {
+    cameraStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode:'user', width:{ideal:640}, height:{ideal:480} },
+      audio: false
+    });
+    video.srcObject = cameraStream;
+    video.style.display = 'block';
+    placeholder.style.display = 'none';
+    title.textContent='摄像头已开启，请正对镜头';
+    sub.textContent='缓慢左右转动头部180°，保持面部在框内';
+
+    // Wait a moment for camera to stabilize
+    await new Promise(r=>setTimeout(r,800));
+    beam.style.display='block';
+    progressWrap.style.visibility='visible';
+    title.textContent='请将面部对准框内';
+    sub.textContent='系统将分三个阶段引导您完成3D扫描';
+    runScanAnimation();
+  } catch(e) {
+    console.error('Camera error:', e);
+    title.textContent='无法访问摄像头';
+    if(e.name==='NotAllowedError'){
+      sub.textContent='请在浏览器设置中允许摄像头权限后重试';
+    } else if(e.name==='NotFoundError'){
+      sub.textContent='未检测到摄像头设备，请连接摄像头后重试';
+    } else {
+      sub.textContent='摄像头访问失败: '+e.message;
+    }
+    btn.disabled=false; btn.style.opacity='1';
+    btn.innerHTML='<i class="fas fa-redo"></i> 重试';
+  }
+};
+
+function runScanAnimation(){
+  const fill=document.getElementById('scanFill');
+  const pct=document.getElementById('scanPct');
+  const title=document.getElementById('scanTitle');
+  const sub=document.getElementById('scanSub');
+  const btn=document.getElementById('scanBtn');
+  const overlay=document.getElementById('scanOverlay');
+  const stages=document.getElementById('scanStages');
+  const beam=document.getElementById('scanBeam');
+
+  overlay.style.display='block';
+  stages.style.display='flex';
+
+  // 3-stage scanning: front → left → right
+  let currentStage=0; // 0=front, 1=left, 2=right
+  let stageProgress=0;
+  let faceDetected=false;
+  let noFaceFrames=0;
+  const stageNames=['正面','左侧','右侧'];
+  const stageGuides=[
+    '请正对镜头，保持面部在框内',
+    '请缓慢向左转头约45°，保持左侧面部可见',
+    '请缓慢向右转头约45°，保持右侧面部可见'
+  ];
+  const stageDurations=[3,3,3]; // seconds per stage
+  const stageChecks=['checkFront','checkLeft','checkRight'];
+  const stageZones=['zoneFront','zoneLeft','zoneRight'];
+  const stageIds=['stage1','stage2','stage3'];
+
+  // Simple face detection via video brightness analysis
+  function detectFace(){
+    const video=document.getElementById('camVideo');
+    if(!video||video.readyState<2) return false;
+    try{
+      const c=document.createElement('canvas');
+      c.width=40;c.height=40;
+      const ctx=c.getContext('2d');
+      ctx.drawImage(video,10,10,20,20,0,0,40,40);
+      const data=ctx.getImageData(10,10,20,20).data;
+      let brightness=0;
+      for(let i=0;i<data.length;i+=4) brightness+=data[i]*0.299+data[i+1]*0.587+data[i+2]*0.114;
+      brightness/=(data.length/4*1.0);
+      return brightness>30; // basic check - face area has skin-tone brightness
+    }catch(e){return true;} // assume ok if can't read
+  }
+
+  // Update stage visual indicators
+  function updateStageUI(){
+    for(let i=0;i<3;i++){
+      const el=document.getElementById(stageIds[i]);
+      const zone=document.getElementById(stageZones[i]);
+      if(i<currentStage){
+        // Completed
+        el.style.background='rgba(76,175,80,0.1)';
+        el.style.borderColor='rgba(76,175,80,0.3)';
+        el.style.color='#81C784';
+        zone.style.opacity='0.3';
+        document.getElementById(stageChecks[i]).style.display='';
+      }else if(i===currentStage){
+        // Active
+        el.style.background='rgba(201,135,143,0.1)';
+        el.style.borderColor='rgba(201,135,143,0.3)';
+        el.style.color='var(--rose-light)';
+        zone.style.opacity='1';
+        zone.querySelector('rect').setAttribute('stroke','var(--rose)');
+      }else{
+        // Pending
+        el.style.background='rgba(255,255,255,0.03)';
+        el.style.borderColor='var(--border-pearl)';
+        el.style.color='var(--text-muted)';
+        zone.style.opacity='0.3';
+      }
+    }
+  }
+
+  let overallProgress=0;
+  const timer=setInterval(()=>{
+    const detected=detectFace();
+
+    if(!detected){
+      noFaceFrames++;
+      if(noFaceFrames>10){
+        title.textContent='⚠️ 未检测到面部';
+        sub.textContent='请将面部放入扫描框内，调整角度后继续';
+        beam.style.animationPlayState='paused';
+        return;
+      }
+    }else{
+      noFaceFrames=0;
+      beam.style.animationPlayState='running';
+    }
+
+    // Advance stage progress
+    if(detected){
+      stageProgress+=100/(stageDurations[currentStage]*10); // ~10 ticks/sec
+    }
+
+    const stagePct=Math.min(100,Math.floor(stageProgress));
+    overallProgress=(currentStage*33)+Math.floor(stagePct*0.33);
+
+    title.textContent=`正在扫描${stageNames[currentStage]}...`;
+    sub.textContent=stageGuides[currentStage];
+    pct.textContent=`${stageNames[currentStage]}扫描 ${stagePct}% · 总进度 ${Math.min(99,overallProgress)}%`;
+    fill.style.width=Math.min(99,overallProgress)+'%';
+
+    updateStageUI();
+
+    // Stage complete
+    if(stageProgress>=100){
+      document.getElementById(stageChecks[currentStage]).style.display='';
+      currentStage++;
+
+      if(currentStage>=3){
+        // All stages done!
+        clearInterval(timer);
+        fill.style.width='100%';
+        pct.textContent='扫描完成！正在生成3D模型...';
+        title.textContent='3D模型生成成功';
+        sub.textContent='即将进入填充模拟页面';
+        overlay.style.display='none';
+        stages.style.display='none';
+
+        if(cameraStream){cameraStream.getTracks().forEach(t=>t.stop());cameraStream=null;}
+        setTimeout(()=>{
+          goToPage('simPage');updateScheme();
+          btn.disabled=false;btn.style.opacity='1';
+          btn.innerHTML='<i class="fas fa-camera"></i> 开启摄像头并扫描';
+          fill.style.width='0%';
+          beam.style.display='none';
+          document.getElementById('scanProgressWrap').style.visibility='hidden';
+          document.getElementById('camVideo').style.display='none';
+          document.getElementById('camPlaceholder').style.display='flex';
+          title.textContent='3D人脸扫描';sub.textContent='需要开启摄像头权限进行面部扫描';
+          stageProgress=0;currentStage=0;
+        },1500);
+      }else{
+        stageProgress=0;
+        // Brief pause between stages
+        title.textContent=`${stageNames[currentStage-1]}扫描完成！`;
+        sub.textContent=`请准备${stageNames[currentStage]}扫描...`;
+      }
+    }
+  },100);
+}
+
+// ═══ THREE.JS ═══
+let scene,camera,renderer,controls,faceMesh;
+let inited=false;
+
+window.initScene = function(){
+  if(inited) return; inited=true;
+  const cv=document.getElementById('simCanvas');
+  const box=cv.parentElement;
+  scene=new THREE.Scene();
+  scene.background=new THREE.Color(0x1A0E14);
+
+  camera=new THREE.PerspectiveCamera(38,box.clientWidth/box.clientHeight,0.1,100);
+  camera.position.set(0,0.1,3.0);
+
+  renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true});
+  renderer.setSize(box.clientWidth,box.clientHeight);
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  renderer.toneMapping=THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure=1.1;
+
+  scene.add(new THREE.AmbientLight(0xF5E6E8,0.5));
+  const key=new THREE.DirectionalLight(0xFFF0E6,0.9);key.position.set(2,3,3);scene.add(key);
+  const fill=new THREE.DirectionalLight(0xE6C8D0,0.3);fill.position.set(-2,1,2);scene.add(fill);
+  const rim=new THREE.DirectionalLight(0xC9878F,0.2);rim.position.set(0,-1,-2);scene.add(rim);
+
+  controls=new OrbitControls(camera,cv);
+  controls.enableDamping=true;controls.dampingFactor=0.07;
+  controls.minDistance=1.8;controls.maxDistance=4.5;
+  controls.target.set(0,0.05,0);
+
+  buildRealisticFace();
+  buildParticles();
+  const grid=new THREE.GridHelper(4,16,0x2A1A22,0x1F1118);grid.position.y=-1.4;scene.add(grid);
+  (function loop(){requestAnimationFrame(loop);controls?.update();renderer?.render(scene,camera);})();
+  window.addEventListener('resize',onResize);
+};
+
+function buildRealisticFace(){
+  // Build a detailed parametric face using LatheGeometry for the profile + custom modifications
+  // This creates a much more realistic face shape than deforming a sphere
+
+  const segments = 80;
+  const geo = new THREE.BufferGeometry();
+
+  // We'll build the face vertex by vertex for maximum control
+  const vertices = [];
+  const normals = [];
+  const uvs = [];
+  const indices = [];
+
+  const W = 64; // horizontal segments
+  const H = 80; // vertical segments
+
+  // Face profile function - given vertical param t (0=top, 1=bottom)
+  // returns the half-width at that height
+  function faceProfile(t) {
+    // t: 0 = crown, 0.15 = forehead, 0.3 = brow, 0.4 = eye level,
+    // 0.5 = nose/mid, 0.6 = upper lip, 0.65 = mouth, 0.7 = lower lip/chin
+    // 0.85 = jaw, 1.0 = neck
+    if(t<0.05) return 0.3 + t*3; // crown
+    if(t<0.15) return 0.45 + (t-0.05)*2.5; // upper forehead widening
+    if(t<0.25) return 0.7 + (t-0.15)*1.0; // forehead max width
+    if(t<0.35) return 0.8 - (t-0.25)*0.4; // narrowing at temples/brow
+    if(t<0.45) return 0.76 - (t-0.35)*0.3; // eye level
+    if(t<0.55) return 0.73 + (t-0.45)*0.2; // cheekbone
+    if(t<0.65) return 0.75 - (t-0.55)*0.5; // narrowing to mouth
+    if(t<0.72) return 0.7 - (t-0.65)*0.6; // mouth to chin
+    if(t<0.82) return 0.658 - (t-0.72)*1.2; // jaw narrowing
+    if(t<0.92) return 0.538 - (t-0.82)*1.0; // chin
+    return 0.438 - (t-0.92)*0.5; // neck
+  }
+
+  // Depth function - how far the face protrudes at param t
+  function faceDepth(t) {
+    if(t<0.05) return -0.2 + t*2; // back of head
+    if(t<0.15) return 0.0 + (t-0.05)*1.0; // forehead
+    if(t<0.25) return 0.1 + (t-0.15)*2.0; // forehead protrusion
+    if(t<0.3) return 0.3 - (t-0.25)*1.0; // brow ridge dip
+    if(t<0.35) return 0.25 + (t-0.3)*3.0; // brow ridge
+    if(t<0.4) return 0.4 - (t-0.35)*2.0; // eye socket dip
+    if(t<0.45) return 0.3 - (t-0.4)*1.0; // eye socket deepest
+    if(t<0.5) return 0.25 + (t-0.45)*4.0; // nose bridge rising
+    if(t<0.55) return 0.45 + (t-0.5)*2.0; // nose tip area
+    if(t<0.58) return 0.55 - (t-0.55)*4.0; // nose tip drop
+    if(t<0.62) return 0.43 + (t-0.58)*0.5; // upper lip
+    if(t<0.65) return 0.445 - (t-0.62)*2.0; // lip dip
+    if(t<0.68) return 0.435 + (t-0.65)*0.3; // lower lip
+    if(t<0.72) return 0.444 - (t-0.68)*1.5; // chin
+    if(t<0.82) return 0.384 - (t-0.72)*0.5; // jaw line
+    if(t<0.92) return 0.334 - (t-0.82)*1.5; // under chin
+    return 0.184 - (t-0.92)*1.0; // neck
+  }
+
+  for(let j=0;j<=H;j++){
+    const t=j/H;
+    const y=1.2-t*2.4; // map to -1.2 .. 1.2
+    const hw=faceProfile(t);
+    const dz=faceDepth(t);
+
+    for(let i=0;i<=W;i++){
+      const u=i/W;
+      const angle=u*Math.PI*2;
+
+      // Basic elliptical cross-section
+      let x=Math.cos(angle)*hw;
+      let z=Math.sin(angle)*0.5 + dz; // 0.5 is head depth half
+
+      // Flatten the back of head
+      if(Math.sin(angle)<0){
+        const backness=-Math.sin(angle);
+        z = dz + 0.5*(1-backness) - backness*0.15;
+      }
+
+      // Nose enhancement (only at front, around t=0.4-0.58)
+      if(Math.abs(Math.cos(angle))<0.15 && t>0.38 && t<0.58){
+        const noseCenter=1-Math.abs(Math.cos(angle))/0.15;
+        const noseV=Math.max(0,1-Math.abs(t-0.5)/0.1);
+        z+=noseCenter*noseV*0.2;
+
+        // Nose tip
+        if(t>0.53 && t<0.57){
+          const tipF=1-Math.abs(t-0.55)/0.02;
+          z+=noseCenter*tipF*0.12;
+        }
+
+        // Nose wing (alar)
+        if(t>0.5 && t<0.56){
+          const wingH=1-Math.abs(t-0.53)/0.03;
+          const wingW=Math.abs(Math.cos(angle));
+          if(wingW>0.05 && wingW<0.2){
+            const wingF=(1-Math.abs(wingW-0.12)/0.08)*wingH;
+            x+=Math.sign(Math.cos(angle))*wingF*0.03;
+            z+=wingF*0.04;
+          }
+        }
+      }
+
+      // Eye sockets
+      const eyeY=0.35;
+      if(Math.abs(y-eyeY)<0.06){
+        const eyeL=Math.abs(x-0.22);
+        const eyeR=Math.abs(x+0.22);
+        const eyeR2=0.08;
+        if(eyeL<eyeR2) z-=(1-eyeL/eyeR2)*0.06;
+        if(eyeR<eyeR2) z-=(1-eyeR/eyeR2)*0.06;
+      }
+
+      // Lips
+      if(t>0.6 && t<0.68 && Math.abs(Math.cos(angle))<0.1){
+        const lipC=1-Math.abs(Math.cos(angle))/0.1;
+        if(t<0.64) z+=lipC*0.04; // upper lip
+        else z+=lipC*0.03; // lower lip
+      }
+
+      // Chin enhancement
+      if(t>0.72 && t<0.82 && Math.abs(Math.cos(angle))<0.08){
+        const chinC=1-Math.abs(Math.cos(angle))/0.08;
+        const chinV=Math.max(0,1-Math.abs(t-0.76)/0.04);
+        z+=chinC*chinV*0.06;
+      }
+
+      // Cheekbone highlight
+      if(t>0.42 && t<0.55){
+        const cheekL=Math.sqrt((x-0.35)**2+(y-0.05)**2);
+        const cheekR=Math.sqrt((x+0.35)**2+(y-0.05)**2);
+        const cR=0.15;
+        if(cheekL<cR) z+=(1-cheekL/cR)*0.05;
+        if(cheekR<cR) z+=(1-cheekR/cR)*0.05;
+      }
+
+      // Ear hints (side protrusion)
+      if(t>0.3 && t<0.55){
+        const earSide=Math.abs(Math.cos(angle));
+        if(earSide>0.85 && earSide<0.98){
+          const earF=(earSide-0.85)/0.13;
+          const earV=1-Math.abs(t-0.42)/0.12;
+          x+=Math.sign(x)*earF*earV*0.04;
+        }
+      }
+
+      vertices.push(x,y,z);
+      uvs.push(u,t);
+    }
+  }
+
+  // Generate indices
+  for(let j=0;j<H;j++){
+    for(let i=0;i<W;i++){
+      const a=j*(W+1)+i;
+      const b=a+1;
+      const c=a+W+1;
+      const d=c+1;
+      indices.push(a,b,c, b,d,c);
+    }
+  }
+
+  geo.setIndex(indices);
+  geo.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));
+  geo.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));
+  geo.computeVertexNormals();
+
+  // Skin material - porcelain with subsurface scattering feel
+  const mat=new THREE.MeshPhysicalMaterial({
+    color:0xF2D5C4,
+    roughness:0.45,
+    metalness:0.01,
+    clearcoat:0.3,
+    clearcoatRoughness:0.3,
+    sheen:0.4,
+    sheenRoughness:0.4,
+    sheenColor:new THREE.Color(0xE8C4C8),
+    thickness:0.6,
+    envMapIntensity:0.4,
+  });
+
+  faceMesh=new THREE.Mesh(geo,mat);
+  faceMesh.scale.set(0.85,0.85,0.85);
+  faceMesh.userData.orig=new Float32Array(vertices);
+  scene.add(faceMesh);
+
+  // Wireframe overlay
+  const wm=new THREE.MeshBasicMaterial({color:0xC9878F,wireframe:true,transparent:true,opacity:0.025});
+  const wf=new THREE.Mesh(geo.clone(),wm);
+  faceMesh.add(wf);
+  faceMesh.userData.wire=wf;
+}
+
+function deform(){
+  if(!faceMesh) return;
+  const pos=faceMesh.geometry.attributes.position;
+  const orig=faceMesh.userData.orig;
+  const F=S.fills;
+  const W2=65; // W+1
+
+  for(let i=0;i<pos.count;i++){
+    let x=orig[i*3],y=orig[i*3+1],z=orig[i*3+2];
+    let dz=0,dy=0,dx=0;
+
+    // Nose fill
+    if(F.nose>0){
+      if(Math.abs(x)<0.15 && y>-0.1 && y<0.3){
+        const f=(1-Math.abs(x)/0.15)*Math.max(0,1-Math.abs(y-0.1)/0.2);
+        dz+=f*F.nose/2*0.18;
+      }
+      if(Math.abs(x)<0.12 && y>-0.05 && y<0.15){
+        const f=(1-Math.abs(x)/0.12)*Math.max(0,1-Math.abs(y-0.05)/0.1);
+        dz+=f*F.nose/2*0.1;
+      }
+    }
+    // Chin fill
+    if(F.chin>0){
+      if(y<-0.5 && Math.abs(x)<0.2){
+        const f=(1-Math.abs(x)/0.2)*Math.max(0,(Math.abs(y+0.5))/0.5);
+        dz+=f*F.chin/2*0.2; dy-=f*F.chin/2*0.06;
+      }
+    }
+    // Cheek fill
+    if(F.cheek>0){
+      [[0.35,0.05],[-0.35,0.05]].forEach(([cx,cy])=>{
+        const d=Math.sqrt((x-cx)**2+(y-cy)**2);
+        if(d<0.18) dz+=(1-d/0.18)*F.cheek/2*0.14;
+      });
+    }
+    // Temple fill
+    if(F.temple>0){
+      [[0.5,0.4],[-0.5,0.4]].forEach(([cx,cy])=>{
+        const d=Math.sqrt((x-cx)**2+(y-cy)**2);
+        if(d<0.14) dz+=(1-d/0.14)*F.temple/2*0.12;
+      });
+    }
+    // Nasolabial fill
+    if(F.nasolabial>0){
+      [[0.18,-0.05],[-0.18,-0.05]].forEach(([cx,cy])=>{
+        const d=Math.sqrt((x-cx)**2+(y-cy)**2);
+        if(d<0.1) dz+=(1-d/0.1)*F.nasolabial/2*0.1;
+      });
+    }
+    // Forehead / brow ridge fill
+    if(F.forehead>0){
+      if(y>0.4 && Math.abs(x)<0.35){
+        const f=(y-0.4)/0.4*(1-Math.abs(x)/0.35);
+        dz+=f*F.forehead/2*0.14;
+      }
+      if(y>0.25 && y<0.4 && Math.abs(x)<0.25){
+        const f=(1-Math.abs(y-0.32)/0.08)*(1-Math.abs(x)/0.25);
+        dz+=f*F.forehead/2*0.1;
+      }
+    }
+
+    pos.setXYZ(i,x+dx,y+dy,z+dz);
+  }
+  pos.needsUpdate=true;
+  faceMesh.geometry.computeVertexNormals();
+  const wp=faceMesh.userData.wire.geometry.attributes.position;
+  wp.array.set(pos.array);wp.needsUpdate=true;
+}
+
+function buildParticles(){
+  const n=160,g=new THREE.BufferGeometry(),p=new Float32Array(n*3);
+  for(let i=0;i<n;i++){p[i*3]=(Math.random()-0.5)*5;p[i*3+1]=(Math.random()-0.5)*5;p[i*3+2]=(Math.random()-0.5)*5;}
+  g.setAttribute('position',new THREE.BufferAttribute(p,3));
+  const m=new THREE.PointsMaterial({color:0xC9878F,size:0.01,transparent:true,opacity:0.25,sizeAttenuation:true});
+  scene.add(new THREE.Points(g,m));
+}
+
+function onResize(){
+  const b=document.getElementById('simCanvas')?.parentElement;if(!b||!camera||!renderer)return;
+  camera.aspect=b.clientWidth/b.clientHeight;camera.updateProjectionMatrix();
+  renderer.setSize(b.clientWidth,b.clientHeight);
+}
+
+// ═══ NAV ═══
+window.goToPage=id=>{
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById(id)?.classList.add('active');S.page=id;
+  if(id==='simPage')setTimeout(()=>{initScene();onResize();},120);
+};
+
+// ═══ SIM ═══
+window.selectPart=part=>{
+  S.part=part;
+  document.querySelectorAll('.part-label').forEach(l=>l.classList.remove('active'));
+  document.querySelectorAll('.part-label').forEach(l=>{if(l.textContent.trim()===NAMES[part])l.classList.add('active');});
+  document.getElementById('fillName').textContent=NAMES[part];
+  document.getElementById('fillSlider').value=S.fills[part]*10;
+  document.getElementById('fillVal').textContent=S.fills[part].toFixed(1)+'ml';
+  if(faceMesh){const s=faceMesh.scale.x;faceMesh.scale.set(s*1.01,s*1.01,s*1.01);setTimeout(()=>faceMesh.scale.set(s,s,s),100);}
+};
+window.updateFill=v=>{const a=v/10;S.fills[S.part]=a;document.getElementById('fillVal').textContent=a.toFixed(1)+'ml';deform();updateScheme();};
+window.switchStyle=style=>{S.style=style;document.querySelectorAll('.style-tab').forEach(t=>t.classList.remove('active'));document.querySelector(`.style-tab[data-style="${style}"]`).classList.add('active');S.fills={...PRESETS[style]};deform();updateScheme();document.getElementById('fillSlider').value=S.fills[S.part]*10;document.getElementById('fillVal').textContent=S.fills[S.part].toFixed(1)+'ml';const sn={recommend:'系统推荐',korean:'韩式自然',western:'欧美立体'};showToast(`已切换至${sn[style]}风格`);};
+window.toggleCompare=()=>{S.compare=!S.compare;showToast(S.compare?'对比模式已开启':'已退出对比模式');};
+
+function updateScheme(){
+  const items=document.getElementById('schemeItems'),total=document.getElementById('schemeTotal');
+  let t=0,h='';
+  for(const[p,a]of Object.entries(S.fills)){if(a>0){const m=MATS[p],pr=Math.round(m.p*(a/1.0));t+=pr;h+=`<div class="scheme-row"><span class="name">${NAMES[p]} · ${m.n}</span><span class="val">${a.toFixed(1)}ml / ¥${pr.toLocaleString()}</span></div>`;}}
+  if(!h)h='<div class="scheme-row"><span class="name" style="color:var(--text-muted)">请选择填充部位</span><span></span></div>';
+  items.innerHTML=h;total.textContent=t>0?`¥${t.toLocaleString()}`:'¥0';
+}
+
+// ═══ CASES ═══
+function renderCases(part){
+  const list=document.getElementById('caseList');
+  const filtered=CASES.filter(c=>c.part===part);
+  if(!filtered.length){list.innerHTML='<div style="text-align:center;padding:40px;color:var(--text-muted)"><i class="fas fa-cube" style="font-size:32px;margin-bottom:10px;display:block;color:var(--rose);opacity:0.25"></i>暂无该部位的3D案例</div>';return;}
+  const sn={recommend:'系统推荐',korean:'韩式自然',western:'欧美立体'};
+  list.innerHTML=filtered.map(c=>{const d=DOCS.find(x=>x.id===c.did);return`<div class="case-card glass" onclick="showCase(${c.id})"><div class="case-top"><div class="case-avatar"><i class="fas fa-user-md"></i></div><div class="case-doc-info"><div class="case-doc-name">${d.name}</div><div class="case-doc-title">${d.rank} · ${d.exp}年经验</div></div><div class="case-style-tag">${sn[c.style]}</div></div><div class="case-models"><div class="case-model-box"><i class="fas fa-cube"></i><span>术前3D模型</span></div><div class="case-model-box"><i class="fas fa-cube after-icon"></i><span>术后3D模型</span></div></div><div class="case-meta"><span><i class="fas fa-syringe"></i>${c.mat} ${c.dose}</span><span><i class="fas fa-clock"></i>恢复${c.rec}</span><span><i class="fas fa-cube"></i>3D案例</span></div></div>`;}).join('');
+}
+
+window.showCase=id=>{
+  const c=CASES.find(x=>x.id===id),d=DOCS.find(x=>x.id===c.did);
+  const sn={recommend:'系统推荐',korean:'韩式自然',western:'欧美立体'};
+  document.getElementById('caseModalBody').innerHTML=`<button class="modal-x" onclick="closeModal()"><i class="fas fa-times"></i></button><h3 style="font-family:var(--font-display);font-size:17px;font-weight:600;color:var(--pearl);margin-bottom:4px">3D案例详情</h3><p style="font-size:11px;color:var(--text-muted);margin-bottom:14px">所有案例均为3D建模效果，支持360°旋转查看</p><div class="case-3d-split"><div class="case-split-side"><span>术前</span><i class="fas fa-cube"></i></div><div class="case-split-side"><span>术后</span><i class="fas fa-cube after-3d"></i></div></div><div class="case-info-rows"><div class="case-info-row"><span class="label">医生</span><span class="val">${d.name} · ${d.rank}</span></div><div class="case-info-row"><span class="label">填充部位</span><span class="val">${NAMES[c.part]}</span></div><div class="case-info-row"><span class="label">风格</span><span class="val">${sn[c.style]}</span></div><div class="case-info-row"><span class="label">材料</span><span class="val">${c.mat}</span></div><div class="case-info-row"><span class="label">剂量</span><span class="val">${c.dose}</span></div><div class="case-info-row"><span class="label">恢复周期</span><span class="val">${c.rec}</span></div></div><button class="btn btn-champagne" style="width:100%" onclick="closeModal();goToDoctorPage()"><i class="fas fa-user-md"></i> 查看该医生</button>`;
+  document.getElementById('caseModal').classList.add('active');
+};
+window.closeModal=()=>document.getElementById('caseModal').classList.remove('active');
+
+document.querySelectorAll('.case-filter .btn').forEach(b=>{b.addEventListener('click',function(){document.querySelectorAll('.case-filter .btn').forEach(x=>x.classList.remove('active'));this.classList.add('active');renderCases(this.dataset.part);});});
+
+// ═══ DOCTORS ═══
+window.goToDoctorPage=()=>{goToPage('doctorPage');renderDocs();};
+function renderDocs(){
+  const list=document.getElementById('docList');
+  const filtered=DOCS.filter(d=>d.parts.includes(S.part)&&d.styles.includes(S.style)).sort((a,b)=>b.cases-a.cases);
+  const docs=filtered.length?filtered:DOCS.sort((a,b)=>b.cases-a.cases);
+  list.innerHTML=docs.map(d=>`<div class="doc-card glass" onclick="bookDoc(${d.id})"><div class="doc-main"><div class="doc-avatar"><i class="fas fa-user-md"></i></div><div class="doc-info"><div class="doc-name-row"><span class="doc-name">${d.name}</span><span class="doc-rank">${d.rank}</span></div><div class="doc-exp">${d.exp}年经验</div><div class="doc-tags">${d.tags.map(t=>`<span class="doc-tag">${t}</span>`).join('')}</div></div></div><div class="doc-stats"><div class="doc-stat"><span class="doc-stat-val">${d.cases}</span><span class="doc-stat-label">3D案例</span></div><div class="doc-stat"><span class="doc-stat-val">⭐ ${d.rating}</span><span class="doc-stat-label">评分</span></div></div></div>`).join('');
+}
+
+// ═══ APPOINTMENT ═══
+window.bookDoc=id=>{S.doctor=DOCS.find(d=>d.id===id);S.date=null;S.time=null;goToPage('apptPage');renderAppt();};
+function renderAppt(){
+  document.getElementById('apptDocName').textContent=S.doctor.name;
+  document.getElementById('apptDocTitle').textContent=`${S.doctor.rank} · ${S.doctor.exp}年经验`;
+  const dg=document.getElementById('dateGrid'),wd=['日','一','二','三','四','五','六'],now=new Date();
+  dg.innerHTML='';for(let i=1;i<=8;i++){const d=new Date(now);d.setDate(d.getDate()+i);dg.innerHTML+=`<div class="date-slot" onclick="selDate(this,'${d.getMonth()+1}/${d.getDate()}')"><div class="day">${d.getDate()}</div><div class="wd">周${wd[d.getDay()]}</div></div>`;}
+  const tg=document.getElementById('timeGrid'),ts=['09:00','09:30','10:00','10:30','14:00','14:30','15:00','15:30','16:00'];
+  tg.innerHTML=ts.map((t,i)=>`<div class="time-slot${i===3||i===7?' disabled':''}" onclick="selTime(this,'${t}')">${t}</div>`).join('');
+  updApptSum();
+}
+window.selDate=(el,d)=>{document.querySelectorAll('.date-slot').forEach(s=>s.classList.remove('active'));el.classList.add('active');S.date=d;};
+window.selTime=(el,t)=>{if(el.classList.contains('disabled'))return;document.querySelectorAll('.time-slot').forEach(s=>s.classList.remove('active'));el.classList.add('active');S.time=t;};
+function updApptSum(){const s=document.getElementById('apptSummary');let t=0,r='';for(const[p,a]of Object.entries(S.fills)){if(a>0){const m=MATS[p],pr=Math.round(m.p*(a/1.0));t+=pr;r+=`<div class="summary-row"><span class="label">${NAMES[p]} · ${m.n}</span><span>¥${pr.toLocaleString()}</span></div>`;}}r+=`<div class="summary-row total"><span>预估总价</span><span class="val">¥${t.toLocaleString()}</span></div>`;s.innerHTML=r;}
+window.submitAppointment=()=>{if(!S.date||!S.time){showToast('请选择预约日期和时段');return;}const n=document.getElementById('apptName').value,p=document.getElementById('apptPhone').value;if(!n||!p){showToast('请填写姓名和手机号');return;}if(!/^1\d{10}$/.test(p)){showToast('请输入正确的手机号');return;}goToPage('successPage');let t=0,items='';for(const[part,a]of Object.entries(S.fills)){if(a>0){const m=MATS[part],pr=Math.round(m.p*(a/1.0));t+=pr;items+=`<div class="s-row"><span class="label">${NAMES[part]}</span><span>${a.toFixed(1)}ml · ${m.n}</span></div>`;}}document.getElementById('successDetail').innerHTML=`<div class="s-row"><span class="label">预约医生</span><span>${S.doctor.name}</span></div><div class="s-row"><span class="label">预约日期</span><span>${S.date}</span></div><div class="s-row"><span class="label">预约时段</span><span>${S.time}</span></div>${items}<div class="s-row" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border-pearl);font-weight:700"><span>预估总价</span><span style="color:var(--champagne)">¥${t.toLocaleString()}</span></div>`;};
+
+// ═══ TOAST ═══
+window.showToast=msg=>{const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);};
+
+// ═══ PRODUCTS ═══
+const PRODUCTS={
+  juvederm_ultra:{id:'juvederm_ultra',name:'乔雅登雅致',brand:'Juvéderm Ultra',brandCN:'乔雅登',maker:'艾尔建 Allergan (美国)',icon:'💉',img:'https://www.allergan.com.cn/Content/Images/Juvederm_Ultra.png',website:'https://www.juvederm.com',websiteCN:'https://www.allergan.com.cn',color:'#E8A0B0',price:8800,unit:'/支(0.8ml)',type:'中分子玻尿酸',tech:'HYLACROSS™ 交联技术',duration:'12-18个月',hardness:'中等 (G\'≈50-80Pa)',features:['柔顺自然','延展性好','适合浅层修饰'],suitable:['鼻基底填充','唇部塑形','浅层皱纹','眉弓微调','面部轮廓柔化'],desc:'乔雅登雅致采用HYLACROSS™专利交联技术，凝胶质地柔顺细腻，注射后效果自然柔和。中分子量设计使其兼具支撑力与延展性，特别适合面部浅层至中层填充，可实现细腻的轮廓优化，触感真实无颗粒感。',fda:true,nmpa:true},
+  juvederm_voluma:{id:'juvederm_voluma',name:'乔雅登极致',brand:'Juvéderm Voluma',brandCN:'乔雅登',maker:'艾尔建 Allergan (美国)',icon:'💎',img:'https://www.allergan.com.cn/Content/Images/Juvederm_Voluma.png',website:'https://www.juvederm.com/voluma',websiteCN:'https://www.allergan.com.cn',color:'#D4A0C0',price:12800,unit:'/支(1.0ml)',type:'大分子玻尿酸',tech:'VYCROSS™ 交联技术',duration:'18-24个月',hardness:'较硬 (G\'≈200-300Pa)',features:['强支撑力','立体塑形','持久稳定'],suitable:['下巴塑形','鼻部增高','颧骨填充','面部轮廓重塑','深层支撑'],desc:'乔雅登极致采用VYCROSS™新一代交联技术，大分子量赋予卓越的支撑力和塑形能力。独特的内聚性设计使其在深层注射后稳定不位移，可实现立体的骨性结构重塑效果，是面部轮廓塑形的首选产品。',fda:true,nmpa:true},
+  restylane:{id:'restylane',name:'瑞蓝2号',brand:'Restylane',brandCN:'瑞蓝',maker:'高德美 Galderma (瑞典)',icon:'🔬',img:'https://www.galdermaaesthetics.com/sites/default/files/2024-12/restylane_product.png',website:'https://www.restylane.com',websiteCN:'https://www.galderma.com.cn',color:'#A0C8E8',price:6800,unit:'/支(1.0ml)',type:'中分子玻尿酸',tech:'NASHA™ 非动物源性交联技术',duration:'6-12个月',hardness:'中等 (G\'≈60-100Pa)',features:['颗粒感强','支撑稳固','不易扩散'],suitable:['苹果肌填充','鼻部塑形','法令纹填充','面部中度皱纹','唇部丰盈'],desc:'瑞蓝2号采用NASHA™专利技术，独特的颗粒状凝胶结构提供稳固支撑，不易扩散移位。作为全球首款非动物源性透明质酸填充剂，安全可靠，临床应用超过25年，是中度面部填充的经典选择。',fda:true,nmpa:true},
+  elravie:{id:'elravie',name:'艾莉薇',brand:'Elravie',brandCN:'艾莉薇',maker:'韩士生科 Huons (韩国)',icon:'🌸',img:'https://www.huons.com/upload/product/elravie_main.png',website:'https://www.huons.com',websiteCN:'https://www.huons.com',color:'#D4B896',price:5800,unit:'/支(1.0ml)',type:'中分子玻尿酸',tech:'MCL™ 多层交联技术',duration:'9-12个月',hardness:'中等偏柔 (G\'≈40-70Pa)',features:['弹性优异','自然融合','性价比高'],suitable:['太阳穴填充','面部动态区域','浅层细纹','面部基础填充','初次填充'],desc:'艾莉薇采用MCL™多层交联技术，凝胶弹性出色，与面部组织融合度高。特别适合面部动态区域填充，表情自然不僵硬。作为韩国销量领先的玻尿酸品牌，性价比优越，是入门级面部填充的优质选择。',fda:false,nmpa:true},
+  jouvence:{id:'jouvence',name:'姣兰',brand:'Jouvence',brandCN:'姣兰',maker:'法国生科 (法国)',icon:'🌿',img:'https://mmbiz.qpic.cn/mmbiz_png/UicQ7FgaVlibVOBncYoY7mqWBia23FNFyKPXRXV8fDPqSgvhJIGYFhoOvqyW4bb6zNjfCHnS9BqPDNGqP3fkNbe5A/640',website:'https://www.jouvence-paris.com',websiteCN:'https://www.jouvence-paris.com',color:'#B8D4A0',price:4800,unit:'/支(1.0ml)',type:'小分子玻尿酸',tech:'单相交联技术',duration:'6-9个月',hardness:'柔软 (G\'≈20-40Pa)',features:['细腻柔软','适合浅层','过渡自然'],suitable:['法令纹填充','浅层细纹','面部微调','唇部细纹','泪沟填充'],desc:'姣兰采用单相交联技术，凝胶质地细腻柔软，特别适合面部浅层细纹填充和微调。注射后过渡自然，无明显边界感，是精细部位修饰的理想选择。价格亲民，适合首次尝试或小面积填充。',fda:false,nmpa:true},
+};desc:'乔雅登极致采用VYCROSS™新一代交联技术，大分子量赋予卓越的支撑力和塑形能力。独特的内聚性设计使其在深层注射后稳定不位移，可实现立体的骨性结构重塑效果，是面部轮廓塑形的首选产品。',fda:true,nmpa:true},
+  restylane:{id:'restylane',name:'瑞蓝2号',brand:'Restylane',brandCN:'瑞蓝',maker:'高德美 Galderma (瑞典)',icon:'🔬',color:'#A0C8E8',price:6800,unit:'/支(1.0ml)',type:'中分子玻尿酸',tech:'NASHA™ 非动物源性交联技术',duration:'6-12个月',hardness:'中等 (G\'≈60-100Pa)',features:['颗粒感强','支撑稳固','不易扩散'],suitable:['苹果肌填充','鼻部塑形','法令纹填充','面部中度皱纹','唇部丰盈'],desc:'瑞蓝2号采用NASHA™专利技术，独特的颗粒状凝胶结构提供稳固支撑，不易扩散移位。作为全球首款非动物源性透明质酸填充剂，安全可靠，临床应用超过25年，是中度面部填充的经典选择。',fda:true,nmpa:true},
+  elravie:{id:'elravie',name:'艾莉薇',brand:'Elravie',brandCN:'艾莉薇',maker:'韩士生科 Huons (韩国)',icon:'🌸',color:'#D4B896',price:5800,unit:'/支(1.0ml)',type:'中分子玻尿酸',tech:'MCL™ 多层交联技术',duration:'9-12个月',hardness:'中等偏柔 (G\'≈40-70Pa)',features:['弹性优异','自然融合','性价比高'],suitable:['太阳穴填充','面部动态区域','浅层细纹','面部基础填充','初次填充'],desc:'艾莉薇采用MCL™多层交联技术，凝胶弹性出色，与面部组织融合度高。特别适合面部动态区域填充，表情自然不僵硬。作为韩国销量领先的玻尿酸品牌，性价比优越，是入门级面部填充的优质选择。',fda:false,nmpa:true},
+  jouvence:{id:'jouvence',name:'姣兰',brand:'Jouvence',brandCN:'姣兰',maker:'法国生科 (法国)',icon:'🌿',color:'#B8D4A0',price:4800,unit:'/支(1.0ml)',type:'小分子玻尿酸',tech:'单相交联技术',duration:'6-9个月',hardness:'柔软 (G\'≈20-40Pa)',features:['细腻柔软','适合浅层','过渡自然'],suitable:['法令纹填充','浅层细纹','面部微调','唇部细纹','泪沟填充'],desc:'姣兰采用单相交联技术，凝胶质地细腻柔软，特别适合面部浅层细纹填充和微调。注射后过渡自然，无明显边界感，是精细部位修饰的理想选择。价格亲民，适合首次尝试或小面积填充。',fda:false,nmpa:true},
+};
+const MAT2PROD={'乔雅登雅致':'juvederm_ultra','乔雅登极致':'juvederm_voluma','瑞蓝2号':'restylane','艾莉薇':'elravie','姣兰':'jouvence'};
+
+// Render product grid on homepage
+function renderProducts(){
+  const grid=document.getElementById('prodGrid');
+  grid.innerHTML=Object.values(PRODUCTS).map(p=>`
+    <div class="prod-card glass" onclick="showProductDetail('${p.id}')">
+      <div class="prod-img"><img src="${p.img}" alt="${p.name}" onerror="this.style.display='none';this.parentElement.textContent='${p.icon}'"></div>
+      <div class="prod-info">
+        <div class="prod-name">${p.name}</div>
+        <div class="prod-brand">${p.maker.split('(')[0].trim()}</div>
+        <div class="prod-price">¥${p.price.toLocaleString()}</div>
+      </div>
+      ${p.fda?'<span class="prod-tag fda">FDA</span>':p.nmpa?'<span class="prod-tag cn">NMPA</span>':''}
+    </div>
+  `).join('');
+}
+
+// Show product detail modal
+window.showProductDetail=pid=>{
+  const p=PRODUCTS[pid];if(!p)return;
+  document.getElementById('prodModalBody').innerHTML=`
+    <button class="modal-x" onclick="closeProdModal()"><i class="fas fa-times"></i></button>
+    <div class="pd-header">
+      <div class="pd-img"><img src="${p.img}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;border-radius:var(--r-lg)" onerror="this.style.display='none';this.parentElement.textContent='${p.icon}'"></div>
+      <div class="pd-title">
+        <div class="pd-name">${p.name}</div>
+        <div class="pd-brand">${p.brand} · ${p.maker}</div>
+        <div class="pd-price-row"><span class="pd-price">¥${p.price.toLocaleString()}</span><span class="pd-unit">${p.unit}</span></div>
+        <div class="pd-badges">
+          ${p.fda?'<span class="pd-badge approved"><i class="fas fa-check-circle"></i> FDA认证</span>':''}
+          ${p.nmpa?'<span class="pd-badge china"><i class="fas fa-check-circle"></i> NMPA认证</span>':''}
+        </div>
+      </div>
+    </div>
+    <div class="pd-desc">${p.desc}</div>
+    <div class="pd-specs">
+      <div class="pd-spec"><div class="pd-spec-label">产品类型</div><div class="pd-spec-value">${p.type}</div></div>
+      <div class="pd-spec"><div class="pd-spec-label">核心技术</div><div class="pd-spec-value">${p.tech}</div></div>
+      <div class="pd-spec"><div class="pd-spec-label">维持时间</div><div class="pd-spec-value">${p.duration}</div></div>
+      <div class="pd-spec"><div class="pd-spec-label">硬度等级</div><div class="pd-spec-value">${p.hardness}</div></div>
+    </div>
+    <div class="pd-features">${p.features.map(f=>`<span class="pd-feature">${f}</span>`).join('')}</div>
+    <div class="pd-suitable-title">适用部位</div>
+    <div class="pd-suitable">${p.suitable.map(s=>`<span class="pd-suit-item">${s}</span>`).join('')}</div>
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      <a href="${p.website}" target="_blank" rel="noopener" class="btn btn-glass btn-sm" style="flex:1;text-decoration:none"><i class="fas fa-globe"></i> 国际官网</a>
+      <a href="${p.websiteCN}" target="_blank" rel="noopener" class="btn btn-glass btn-sm" style="flex:1;text-decoration:none"><i class="fas fa-flag"></i> 中国官网</a>
+    </div>
+    <button class="btn btn-champagne" style="width:100%" onclick="closeProdModal();startSimulation()"><i class="fas fa-magic"></i> 立即体验3D模拟</button>
+  `;
+  document.getElementById('prodModal').classList.add('active');
+};
+window.closeProdModal=()=>document.getElementById('prodModal').classList.remove('active');
+window.showProductList=()=>{
+  // Scroll to products section on home
+  goToPage('homePage');
+  setTimeout(()=>{
+    const el=document.querySelector('.products-section');
+    if(el) el.scrollIntoView({behavior:'smooth',block:'center'});
+  },500);
+};
+
+// Helper: make product name clickable
+function prodLink(matName){const pid=MAT2PROD[matName];return pid?`<span class="prod-link" onclick="event.stopPropagation();showProductDetail('${pid}')">${matName}</span>`:matName;}
+
+// Override updateScheme to use prodLink
+const _origUpdateScheme=updateScheme;
+updateScheme=function(){
+  const items=document.getElementById('schemeItems'),total=document.getElementById('schemeTotal');
+  let t=0,h='';
+  for(const[p,a]of Object.entries(S.fills)){if(a>0){const m=MATS[p],pr=Math.round(m.p*(a/1.0));t+=pr;h+=`<div class="scheme-row"><span class="name">${NAMES[p]} · ${prodLink(m.n)}</span><span class="val">${a.toFixed(1)}ml / ¥${pr.toLocaleString()}</span></div>`;}}
+  if(!h)h='<div class="scheme-row"><span class="name" style="color:var(--text-muted)">请选择填充部位</span><span></span></div>';
+  items.innerHTML=h;total.textContent=t>0?`¥${t.toLocaleString()}`:'¥0';
+};
+
+// Override showCase to use prodLink
+const _origShowCase=window.showCase;
+window.showCase=id=>{
+  const c=CASES.find(x=>x.id===id),d=DOCS.find(x=>x.id===c.did);
+  const sn={recommend:'系统推荐',korean:'韩式自然',western:'欧美立体'};
+  document.getElementById('caseModalBody').innerHTML=`<button class="modal-x" onclick="closeModal()"><i class="fas fa-times"></i></button><h3 style="font-family:var(--font-display);font-size:17px;font-weight:600;color:var(--pearl);margin-bottom:4px">3D案例详情</h3><p style="font-size:11px;color:var(--text-muted);margin-bottom:14px">所有案例均为3D建模效果，支持360°旋转查看</p><div class="case-3d-split"><div class="case-split-side"><span>术前</span><i class="fas fa-cube"></i></div><div class="case-split-side"><span>术后</span><i class="fas fa-cube after-3d"></i></div></div><div class="case-info-rows"><div class="case-info-row"><span class="label">医生</span><span class="val">${d.name} · ${d.rank}</span></div><div class="case-info-row"><span class="label">填充部位</span><span class="val">${NAMES[c.part]}</span></div><div class="case-info-row"><span class="label">风格</span><span class="val">${sn[c.style]}</span></div><div class="case-info-row"><span class="label">材料</span><span class="val">${prodLink(c.mat)}</span></div><div class="case-info-row"><span class="label">剂量</span><span class="val">${c.dose}</span></div><div class="case-info-row"><span class="label">恢复周期</span><span class="val">${c.rec}</span></div></div><button class="btn btn-champagne" style="width:100%" onclick="closeModal();goToDoctorPage()"><i class="fas fa-user-md"></i> 查看该医生</button>`;
+  document.getElementById('caseModal').classList.add('active');
+};
+
+// Override updApptSum to use prodLink
+const _origUpdApptSum=updApptSum;
+updApptSum=function(){
+  const s=document.getElementById('apptSummary');let t=0,r='';
+  for(const[p,a]of Object.entries(S.fills)){if(a>0){const m=MATS[p],pr=Math.round(m.p*(a/1.0));t+=pr;r+=`<div class="summary-row"><span class="label">${NAMES[p]} · ${prodLink(m.n)}</span><span>¥${pr.toLocaleString()}</span></div>`;}}
+  r+=`<div class="summary-row total"><span>预估总价</span><span class="val">¥${t.toLocaleString()}</span></div>`;s.innerHTML=r;
+};
+
+// ═══ INIT ═══
+setTimeout(()=>document.getElementById('loadScreen').classList.add('gone'),700);
+renderCases('nose');updateScheme();renderProducts();
+</script>
+</body>
+</html>
